@@ -4,6 +4,7 @@
 # Тестирование студентов
 
 <a href="http://prep.scc/cgi-bin/testm/view.pl?prep=asv&grp=ib-233&prd=2004">ИБ233</a>
+<a href="http://prep.scc/cgi-bin/testm/jrn_reyting.pl?prep=asv&sp=0907&grp=ib-233&prd=2004">Рейтинг</a>
 
 # Раздел 1. Основы .NET и С#
 
