@@ -6,16 +6,6 @@
 <a href="http://prep.scc/cgi-bin/testm/view.pl?prep=asv&grp=ib-233&prd=2004">ИБ233</a>
 <a href="http://prep.scc/cgi-bin/testm/jrn_reyting.pl?prep=asv&sp=0907&grp=ib-233&prd=2004">Рейтинг</a>
 
-# Учебная практика
-
-- 2025: 3.12 - 9.12
-
-# Экзамен
-10.12 9:00
-
-# ПМ
-26.12 9:00
-
 
 
 # Раздел 1. Основы .NET и С#
