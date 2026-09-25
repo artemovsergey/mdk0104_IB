@@ -10,18 +10,15 @@
 
 <!-- TODO: заполнить орг-данные перед началом семестра -->
 
-- **Группы:** `<группы>`
-- **Ссылки на систему тестирования:** `<ссылки>`
+- **Группы:** `ИБ-243`
+- **Ссылки на систему тестирования:** см. раздел «Тестирование студентов»
 - **Учебная практика:** `<неделя, даты>`
 - **Экзамен:** `<дата и время>`
 - **ПМ:** `<дата и время>`
 
 ## Тестирование студентов
 
-<!-- TODO: актуализировать группу и период в ссылках ниже -->
-
-<a href="http://prep.scc/cgi-bin/testm/view.pl?prep=asv&grp=ib-233&prd=2004">ИБ233</a>
-<a href="http://prep.scc/cgi-bin/testm/jrn_reyting.pl?prep=asv&sp=0907&grp=ib-233&prd=2004">Рейтинг</a>
+- **ИБ-243:** <a href="http://prep.scc/cgi-bin/testm/view.pl?prep=asv&grp=ib-243&prd=2004">тестирование</a> · <a href="http://prep.scc/cgi-bin/testm/jrn.pl?prep=asv&sp=0907&grp=ib-243&prd=2004">журнал</a> · <a href="http://prep.scc/cgi-bin/testm/jrn_reyting.pl?prep=asv&sp=0907&grp=ib-243&prd=2004">рейтинг</a>
 
 ## Порядок сдачи экзамена
 
