@@ -162,12 +162,15 @@ def _run_figures(args: argparse.Namespace) -> int:
 
 
 def _run_normalize(args: argparse.Namespace) -> int:
-    changed = normalize_tree(Path("course"), Path("build/normalized"))
+    from coursekit.normalize import check_normalized
+
+    changed = check_normalized(Path("course"), Path("build/normalized"))
     if args.check:
         for path in changed:
             print(path)
         return 1 if changed else 0
-    print(f"файлов изменено: {len(changed)}")
+    normalize_tree(Path("course"), Path("build/normalized"))
+    print(f"нормализовано файлов: {len(list(Path('course').rglob('*.md')))}")
     return 0
 
 
@@ -216,6 +219,8 @@ def build(
     source_dir = Path(source)
     dist = Path(out)
     dist.mkdir(parents=True, exist_ok=True)
+
+    normalize_tree(source_dir, Path("build/normalized"))
 
     docs = collect_docs(source_dir)
     if section is not None:
