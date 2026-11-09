@@ -1,0 +1,50 @@
+name: Материалы курса
+
+on:
+  push:
+    paths:
+      - "course/**"
+      - "tools/**"
+      - "course.yml"
+      - ".github/workflows/materials.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tools/pyproject.toml
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: typst-community/setup-typst@v3
+
+      - name: Системные зависимости
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc poppler-utils fonts-liberation
+
+      - name: Установка coursekit
+        run: pip install -e "tools[dev]"
+
+      - name: Сборка
+        run: python -m coursekit build --book
+
+      - name: Публикация артефактов
+        uses: actions/upload-artifact@v4
+        with:
+          name: materials
+          path: dist/
+          if-no-files-found: error
