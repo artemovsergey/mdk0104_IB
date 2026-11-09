@@ -38,10 +38,11 @@ def build_parser() -> argparse.ArgumentParser:
         _add_common(cmd)
 
     docx = sub.choices["docx"]
-    docx.add_argument("--config", default="course.yml", help="файл конфигурации курса")
-    docx.add_argument("--source", default="course", help="каталог исходников")
-    docx.add_argument("--normalized", default="build/normalized", help="каталог нормализованных файлов")
-    docx.add_argument("--out", default="dist/docx", help="каталог результатов")
+    _add_paths(docx, "dist/docx")
+    pdf = sub.choices["pdf"]
+    _add_paths(pdf, "dist/pdf")
+    pptx = sub.choices["pptx"]
+    _add_paths(pptx, "dist/pptx")
 
     qa = sub.add_parser("qa", help="проверить корпус")
     qa.add_argument("--strict", action="store_true", help="падать и на WARN")
@@ -54,13 +55,21 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run_docx(args: argparse.Namespace) -> int:
+def _add_paths(parser: argparse.ArgumentParser, out_default: str) -> None:
+    parser.add_argument("--config", default="course.yml", help="файл конфигурации курса")
+    parser.add_argument("--source", default="course", help="каталог исходников")
+    parser.add_argument(
+        "--normalized", default="build/normalized", help="каталог нормализованных файлов"
+    )
+    parser.add_argument("--out", default=out_default, help="каталог результатов")
+
+
+def _collect(args: argparse.Namespace):
     from pathlib import Path
 
-    from coursekit.config import artifact_name, load_config
+    from coursekit.config import load_config
     from coursekit.model import parse_document
     from coursekit.normalize import normalize_tree
-    from coursekit.render_docx import build_docx
 
     cfg = load_config(Path(args.config))
     normalized = Path(args.normalized)
@@ -72,11 +81,51 @@ def _run_docx(args: argparse.Namespace) -> int:
     ]
     if args.section is not None:
         docs = [doc for doc in docs if f"Раздел {args.section}" in str(doc.path)]
+    return cfg, docs
 
+
+def _run_docx(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from coursekit.config import artifact_name
+    from coursekit.render_docx import build_docx
+
+    cfg, docs = _collect(args)
     out_dir = Path(args.out)
     for doc in docs:
         name = artifact_name(cfg, doc) + ".docx"
         build_docx(doc, cfg, out_dir / name, Path("build/docx-work"))
+        print(name)
+    return 0
+
+
+def _run_pdf(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from coursekit.config import artifact_name
+    from coursekit.render_pdf import build_pdf
+
+    cfg, docs = _collect(args)
+    out_dir = Path(args.out)
+    for doc in docs:
+        name = artifact_name(cfg, doc) + ".pdf"
+        build_pdf(doc, cfg, out_dir / name, Path("build/pdf-work"))
+        print(name)
+    return 0
+
+
+def _run_pptx(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from coursekit.config import artifact_name
+    from coursekit.render_pptx import build_pptx
+
+    cfg, docs = _collect(args)
+    docs = [doc for doc in docs if doc.kind == "lecture"]
+    out_dir = Path(args.out)
+    for doc in docs:
+        name = artifact_name(cfg, doc) + ".pptx"
+        build_pptx(doc, cfg, out_dir / name)
         print(name)
     return 0
 
@@ -86,5 +135,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "docx":
         return _run_docx(args)
+    if args.command == "pdf":
+        return _run_pdf(args)
+    if args.command == "pptx":
+        return _run_pptx(args)
     print(f"{args.command}: не реализовано")
     return 2
