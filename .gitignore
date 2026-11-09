@@ -1,2 +1,9 @@
 promt.md
-tests
+/tests/
+.venv/
+build/
+dist/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.egg-info/

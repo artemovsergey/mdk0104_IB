@@ -1,0 +1,27 @@
+[project]
+name = "coursekit"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "PyYAML>=6,<7",
+  "python-docx>=1.1,<2",
+  "python-pptx>=1.0,<2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["coursekit*"]
+
+[tool.setuptools.package-data]
+coursekit = ["templates/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["coursekit/tests"]
+markers = ["integration: требует внешний бинарник (pandoc, typst, mmdc)"]

@@ -1,0 +1,14 @@
+course:
+  code: "МДК 01.04"
+  title: "Системное программирование"
+  specialty: "09.02.07, ИБ"
+  group: "ИБ-243"
+  year: "2026/2027"
+  teacher: "<ФИО преподавателя>"
+  repo_slug: "mdk0104-ib"
+build:
+  docx: true
+  pdf: true
+  pptx: true
+  figures: true
+  book: false
