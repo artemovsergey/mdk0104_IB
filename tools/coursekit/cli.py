@@ -43,6 +43,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_paths(pdf, "dist/pdf")
     pptx = sub.choices["pptx"]
     _add_paths(pptx, "dist/pptx")
+    figures = sub.choices["figures"]
+    _add_paths(figures, "dist/figures")
 
     qa = sub.add_parser("qa", help="проверить корпус")
     qa.add_argument("--strict", action="store_true", help="падать и на WARN")
@@ -130,6 +132,23 @@ def _run_pptx(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_figures(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from coursekit.render_figures import build_figures
+
+    _cfg, docs = _collect(args)
+    out_dir = Path(args.out)
+    total = 0
+    for doc in docs:
+        figures = build_figures(doc, out_dir)
+        for path in figures.values():
+            print(path)
+        total += len(figures)
+    print(f"схем: {total}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -139,5 +158,7 @@ def main(argv: list[str] | None = None) -> int:
         return _run_pdf(args)
     if args.command == "pptx":
         return _run_pptx(args)
+    if args.command == "figures":
+        return _run_figures(args)
     print(f"{args.command}: не реализовано")
     return 2
