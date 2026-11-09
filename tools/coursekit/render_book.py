@@ -20,6 +20,9 @@ def _section_number(doc: Document) -> int:
     return 99
 
 
+_PAGEBREAK = "<!-- pagebreak -->"
+
+
 def build_book_md(docs: list[Document], cfg: CourseConfig | None = None) -> str:
     ordered = sorted(
         docs, key=lambda doc: (_section_number(doc), _KIND_ORDER.get(doc.kind, 9), doc.number)
@@ -27,7 +30,7 @@ def build_book_md(docs: list[Document], cfg: CourseConfig | None = None) -> str:
     parts: list[str] = []
     for doc in ordered:
         parts.append(doc.raw.rstrip() + "\n")
-    body = "\n<!-- pagebreak -->\n\n".join(parts)
+    body = f"\n\n{_PAGEBREAK}\n\n".join(parts)
 
     if cfg is None:
         return body
