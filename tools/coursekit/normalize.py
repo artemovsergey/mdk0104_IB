@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from coursekit.model import canonical_title
+
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$")
 _FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
@@ -30,7 +32,9 @@ def _canonical_heading(level: int, text: str) -> tuple[int, str]:
         return 3, text
     if _NUMBERED_RE.match(text):
         return 2, text
-    return 2, text
+    if canonical_title(text) is not None:
+        return 2, text
+    return min(max(level, 2), 3), text
 
 
 def normalize_text(text: str) -> tuple[str, list[str]]:
