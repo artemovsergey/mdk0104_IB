@@ -9,7 +9,7 @@ from pathlib import Path
 
 from coursekit.config import CourseConfig, slugify
 from coursekit.model import Document
-from coursekit.render_docx import replace_missing_images
+from coursekit.render_docx import _IMAGE, replace_missing_images
 
 _TEMPLATE = Path(__file__).parent / "templates" / "gost.typ"
 
@@ -56,6 +56,27 @@ def escape_slashes(text: str) -> str:
     return "".join(out)
 
 
+def _to_root_relative(markdown: str, root: Path) -> str:
+    """Переводит абсолютные пути картинок в пути от корня Typst (/dist/...)."""
+    root = root.resolve()
+
+    def repl(match: re.Match[str]) -> str:
+        alt = match.group(1)
+        target = match.group(2).strip()
+        if target.startswith("<") and target.endswith(">"):
+            target = target[1:-1]
+        path = Path(target)
+        if not path.is_absolute():
+            return match.group(0)
+        try:
+            rel = path.resolve().relative_to(root)
+        except ValueError:
+            return match.group(0)
+        return f"![{alt}](/{rel.as_posix()})"
+
+    return _IMAGE.sub(repl, markdown)
+
+
 def build_pdf(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Path:
     if not shutil.which("typst"):
         raise RuntimeError("typst не найден в PATH")
@@ -65,7 +86,10 @@ def build_pdf(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Pat
     stem = slugify(doc.title)
     md_path = workdir / f"{stem}.md"
     typ_path = workdir / f"{stem}.typ"
-    md_path.write_text(replace_missing_images(doc.raw, doc) + "\n", encoding="utf-8")
+    root = Path(os.path.commonpath([workdir.resolve(), out.resolve()]))
+    body = replace_missing_images(doc.raw, doc)
+    body = _to_root_relative(body, root)
+    md_path.write_text(body + "\n", encoding="utf-8")
 
     _run(
         [
@@ -93,7 +117,7 @@ def build_pdf(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Pat
             "typst",
             "compile",
             "--root",
-            str(Path(os.path.commonpath([workdir.resolve(), out.resolve()]))),
+            str(root),
             str(typ_path.resolve()),
             str(out.resolve()),
             "--input",

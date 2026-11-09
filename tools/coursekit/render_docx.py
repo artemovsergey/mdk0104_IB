@@ -32,12 +32,14 @@ def _fill(template: str, cfg: CourseConfig, doc: Document) -> str:
     return result
 
 
-def _replace_images(markdown: str, doc: Document) -> str:
+def replace_missing_images(markdown: str, doc: Document) -> str:
     base = doc.path.parent
 
     def repl(match: re.Match[str]) -> str:
         alt = match.group(1).strip() or "изображение"
-        target = match.group(2)
+        target = match.group(2).strip()
+        if target.startswith("<") and target.endswith(">"):
+            target = target[1:-1]
         if target.startswith(("http://", "https://")):
             return match.group(0)
         candidate = Path(target)
@@ -56,7 +58,7 @@ def build_docx(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Pa
 
     template = _TEMPLATE.read_text(encoding="utf-8")
     titlepage = _fill(template, cfg, doc)
-    body = _replace_images(doc.raw, doc)
+    body = replace_missing_images(doc.raw, doc)
     body = body.replace("<!-- pagebreak -->", _PAGEBREAK)
 
     prepared = f"{titlepage}\n\n{_PAGEBREAK}\n\n{body}\n"

@@ -56,6 +56,8 @@ def _mask_code(lines: list[str]) -> tuple[list[bool], list[tuple[int, str, int |
 
 def _resolve(doc: Document, root: Path, target: str) -> Path | None:
     target = target.split("#", 1)[0].strip()
+    if target.startswith("<") and target.endswith(">"):
+        target = target[1:-1]
     if not target or target.startswith(("http://", "https://", "mailto:", "tel:")):
         return None
     path = Path(target)

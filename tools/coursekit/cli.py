@@ -109,8 +109,10 @@ def _collect(args: argparse.Namespace):
 def _run_docx(args: argparse.Namespace) -> int:
     from coursekit.config import artifact_name
     from coursekit.render_docx import build_docx
+    from coursekit.render_figures import prepare_doc
 
     cfg, docs = _collect(args)
+    docs = [prepare_doc(doc, Path("dist/figures")) for doc in docs]
     out_dir = Path(args.out)
     for doc in docs:
         name = artifact_name(cfg, doc) + ".docx"
@@ -121,9 +123,11 @@ def _run_docx(args: argparse.Namespace) -> int:
 
 def _run_pdf(args: argparse.Namespace) -> int:
     from coursekit.config import artifact_name
+    from coursekit.render_figures import prepare_doc
     from coursekit.render_pdf import build_pdf
 
     cfg, docs = _collect(args)
+    docs = [prepare_doc(doc, Path("dist/figures")) for doc in docs]
     out_dir = Path(args.out)
     for doc in docs:
         name = artifact_name(cfg, doc) + ".pdf"
@@ -248,8 +252,13 @@ def build(
             print(path)
 
     if book and section is None and docs:
+        from dataclasses import replace
+
         book_md = build_book_md(docs)
-        book_doc = parse_document(book_md, source_dir / "book.md")
+        book_doc = replace(
+            parse_document(book_md, source_dir / "book.md"),
+            title=f"{cfg.title}. Сборник материалов",
+        )
         if "docx" in stages:
             path = dist / "docx" / f"{cfg.repo_slug}-book.docx"
             build_docx(book_doc, cfg, path, Path("build/docx-work"))

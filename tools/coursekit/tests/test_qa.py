@@ -52,3 +52,11 @@ def test_broken_relative_link_is_error(tmp_path: Path):
     doc = _doc("# Лекция 1\n\n[файл](missing.md)\n")
     issues = run_qa([doc], tmp_path)
     assert any(i.level == "ERROR" and i.code == "LINK_BROKEN" for i in issues)
+
+
+def test_angle_bracket_image_is_not_missing(tmp_path: Path):
+    image = tmp_path / "figure.png"
+    image.write_bytes(b"png")
+    doc = _doc(f"# Лекция 1\n\n![Схема 1](<{image.as_posix()}>)\n")
+    issues = run_qa([doc], tmp_path)
+    assert not [i for i in issues if i.code == "IMAGE_MISSING"]

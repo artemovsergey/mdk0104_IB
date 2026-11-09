@@ -36,7 +36,7 @@
 
 #align(center)[
   #text(size: 16pt, weight: "bold")[#sys.inputs.at("code", default: "")] \
-  #text(size: 20pt, weight: "bold")[#sys.inputs.at("title", default: "")] \
+  #text(size: 20pt, weight: "bold", hyphenate: false)[#sys.inputs.at("title", default: "")] \
   #v(1cm)
   #text(size: 14pt)[#sys.inputs.at("specialty", default: "")] \
   #text(size: 14pt)[#sys.inputs.at("group", default: "")] \

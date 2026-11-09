@@ -12,4 +12,5 @@ def test_substitute_replaces_block_with_image():
     md = "До\n\n```mermaid\ngraph TD\nA-->B\n```\n\nПосле\n"
     out = substitute_figures(md, {0: Path("build/figures/x-1.svg")})
     assert "```mermaid" not in out
-    assert "![Схема 1](build/figures/x-1.svg)" in out
+    expected = Path("build/figures/x-1.svg").resolve().as_posix()
+    assert f"![Схема 1](<{expected}>)" in out

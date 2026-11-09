@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import replace
 from pathlib import Path
 
+from coursekit.config import slugify
 from coursekit.model import Document, parse_document
 
 _TEMPLATE = Path(__file__).parent / "templates" / "puppeteer.json"
@@ -26,7 +27,8 @@ def substitute_figures(text: str, figures: dict[int, Path]) -> str:
         path = figures.get(index)
         if path is None:
             return match.group(0)
-        return f"![Схема {index + 1}]({path.as_posix()})"
+        target = path.resolve().as_posix()
+        return f"![Схема {index + 1}](<{target}>)"
 
     return _BLOCK.sub(replace_block, text)
 
@@ -45,7 +47,7 @@ def build_figures(doc: Document, out_dir: Path) -> dict[int, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     figures: dict[int, Path] = {}
     for index, code in enumerate(blocks):
-        stem = f"{doc.path.stem}-{index + 1}"
+        stem = f"{slugify(doc.path.stem)}-{index + 1}"
         source = out_dir / f"{stem}.mmd"
         output = out_dir / f"{stem}.png"
         source.write_text(code + "\n", encoding="utf-8")
