@@ -76,3 +76,15 @@
 # Экзамен
 
 Экзаменационные задания: [examen.md](examen.md)
+
+# Сборка материалов
+
+Из markdown собираются DOCX, PDF, презентации и сборник курса:
+
+```bash
+python -m coursekit build --section 1   # раздел
+python -m coursekit build --book        # весь курс
+python -m coursekit qa                  # только проверка
+```
+
+Установка, команды и правила оформления — в [docs/pipeline.md](docs/pipeline.md).
