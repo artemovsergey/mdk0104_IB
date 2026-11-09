@@ -45,6 +45,7 @@ def normalize_text(text: str) -> tuple[str, list[str]]:
     fence_len = 0
     h1_count = 0
     previous_level = 0
+    just_closed = False
 
     for number, line in enumerate(text.splitlines(), start=1):
         if fence is not None:
@@ -57,8 +58,14 @@ def normalize_text(text: str) -> tuple[str, list[str]]:
             ):
                 fence = None
                 fence_len = 0
+                just_closed = True
             result.append(line)
             continue
+
+        if just_closed:
+            if line.strip() and not _FENCE_RE.match(line):
+                result.append("")
+            just_closed = False
 
         opening = _FENCE_RE.match(line)
         if opening:
@@ -66,6 +73,8 @@ def normalize_text(text: str) -> tuple[str, list[str]]:
             fence_len = len(opening.group(1))
             if not opening.group(2).strip():
                 warnings.append(f"строка {number}: блок кода без языка")
+            if result and result[-1].strip():
+                result.append("")
             result.append(line)
             continue
 

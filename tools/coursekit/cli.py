@@ -37,6 +37,12 @@ def build_parser() -> argparse.ArgumentParser:
         cmd = sub.add_parser(name, help=help_text)
         _add_common(cmd)
 
+    docx = sub.choices["docx"]
+    docx.add_argument("--config", default="course.yml", help="файл конфигурации курса")
+    docx.add_argument("--source", default="course", help="каталог исходников")
+    docx.add_argument("--normalized", default="build/normalized", help="каталог нормализованных файлов")
+    docx.add_argument("--out", default="dist/docx", help="каталог результатов")
+
     qa = sub.add_parser("qa", help="проверить корпус")
     qa.add_argument("--strict", action="store_true", help="падать и на WARN")
 
@@ -48,8 +54,37 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _run_docx(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from coursekit.config import artifact_name, load_config
+    from coursekit.model import parse_document
+    from coursekit.normalize import normalize_tree
+    from coursekit.render_docx import build_docx
+
+    cfg = load_config(Path(args.config))
+    normalized = Path(args.normalized)
+    normalize_tree(Path(args.source), normalized)
+
+    docs = [
+        parse_document(path.read_text(encoding="utf-8"), path)
+        for path in sorted(normalized.rglob("*.md"))
+    ]
+    if args.section is not None:
+        docs = [doc for doc in docs if f"Раздел {args.section}" in str(doc.path)]
+
+    out_dir = Path(args.out)
+    for doc in docs:
+        name = artifact_name(cfg, doc) + ".docx"
+        build_docx(doc, cfg, out_dir / name, Path("build/docx-work"))
+        print(name)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command == "docx":
+        return _run_docx(args)
     print(f"{args.command}: не реализовано")
     return 2
