@@ -10,7 +10,7 @@ from pathlib import Path
 from coursekit.model import Document, parse_document
 from coursekit.normalize import normalize_text, normalize_tree
 
-COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "qa", "clean", "build")
+COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "qa", "clean", "build")
 
 _SECTION_RE = re.compile(r"Раздел\s+(\d+)")
 _KIND_ORDER = {"lecture": 0, "practice": 1, "selfstudy": 2, "exam": 3}
@@ -70,6 +70,12 @@ def build_parser() -> argparse.ArgumentParser:
     _add_paths(pdf, "dist/pdf")
     pptx = sub.choices["pptx"]
     _add_paths(pptx, "dist/pptx")
+
+    deck = sub.add_parser("deck", help="собрать презентацию из исходника колоды")
+    deck.add_argument("source", help="markdown-файл колоды")
+    deck.add_argument("--config", default="course.yml")
+    deck.add_argument("--out", default="dist/pptx")
+
     figures = sub.choices["figures"]
     _add_paths(figures, "dist/figures")
 
@@ -147,6 +153,23 @@ def _run_pptx(args: argparse.Namespace) -> int:
         name = artifact_name(cfg, doc) + ".pptx"
         build_pptx(doc, cfg, out_dir / name)
         print(name)
+    return 0
+
+
+def _run_deck(args: argparse.Namespace) -> int:
+    from coursekit.config import artifact_name, load_config
+    from coursekit.render_deck import build_deck
+
+    source = Path(args.source)
+    text = source.read_text(encoding="utf-8")
+    normalized, _ = normalize_text(text)
+    doc = parse_document(normalized, source)
+    cfg = load_config(args.config)
+    out = Path(args.out) / (artifact_name(cfg, doc) + ".pptx")
+    warnings = build_deck(text, cfg, out, base_dir=source.parent)
+    print(out)
+    for warning in warnings:
+        print(f"WARN: {warning}")
     return 0
 
 
@@ -305,6 +328,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_pdf(args)
     if args.command == "pptx":
         return _run_pptx(args)
+    if args.command == "deck":
+        return _run_deck(args)
     if args.command == "figures":
         return _run_figures(args)
     return 2
