@@ -145,8 +145,9 @@ def header_band(slide, kicker, title, accent=ACCENT):
     add_rect(slide, 0, Inches(1.18), SLIDE_W, Inches(0.06), accent)
     _, tf = add_text(slide, Inches(0.55), Inches(0.14), Inches(12.2), Inches(0.4), anchor=MSO_ANCHOR.MIDDLE)
     para(tf, kicker, size=12, color=RGBColor(0x9F, 0xC5, 0xE6), bold=True, first=True, space_after=0)
-    _, tf2 = add_text(slide, Inches(0.55), Inches(0.52), Inches(12.2), Inches(0.6), anchor=MSO_ANCHOR.MIDDLE)
-    para(tf2, title, size=27, color=WHITE, bold=True, first=True, space_after=0)
+    size = 27 if len(title) <= 46 else 22 if len(title) <= 64 else 19
+    _, tf2 = add_text(slide, Inches(0.55), Inches(0.40), Inches(12.2), Inches(0.74), anchor=MSO_ANCHOR.MIDDLE)
+    para(tf2, title, size=size, color=WHITE, bold=True, first=True, space_after=0)
 
 
 def conspect_box(slide, items, y=Inches(5.35), h=Inches(1.75), x=Inches(0.55), w=Inches(12.25)):
@@ -168,7 +169,7 @@ def code_box(slide, x, y, w, h, code_lines, size=10.5):
     box = add_rect(slide, x, y, w, h, CODE_BG, line_color=LINE, line_w=Pt(0.75), round_=True)
     _, tf = add_text(slide, x + Inches(0.25), y + Inches(0.18), w - Inches(0.5), h - Inches(0.36),
                      anchor=MSO_ANCHOR.TOP)
-    tf.word_wrap = False
+    tf.word_wrap = True
     first = True
     max_lines = max(1, int(h.inches * (72 / (size * 1.25))) - 2)
     for ln in code_lines:

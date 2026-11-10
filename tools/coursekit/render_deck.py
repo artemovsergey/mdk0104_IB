@@ -8,6 +8,7 @@ from pathlib import Path
 
 from pptx import Presentation
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+from pptx.oxml.ns import qn
 from pptx.util import Emu, Inches, Pt
 
 from coursekit.config import CourseConfig
@@ -168,7 +169,7 @@ def _content_slide(slide: Slide, cfg: CourseConfig, prs: Presentation) -> None:
             frame.paragraphs[0].font.name = FONT_BODY
             top = Inches(2.55)
         avail = SLIDE_H - top - Inches(0.45)
-        size = 14 if len(slide.code) <= 10 else 11
+        size = 17 if len(slide.code) <= 8 else 15 if len(slide.code) <= 12 else 12
         # панель кода по высоте фрагмента, а не до низа слайда
         needed = int(Inches(len(slide.code) * size * 1.35 / 72 + 0.45))
         height = min(int(avail), needed)
@@ -199,11 +200,19 @@ def _content_slide(slide: Slide, cfg: CourseConfig, prs: Presentation) -> None:
     frame.word_wrap = True
     for index, item in enumerate(slide.bullets):
         paragraph = frame.paragraphs[0] if index == 0 else frame.add_paragraph()
-        paragraph.text = f"•  {item}"
+        paragraph.text = item
         paragraph.font.size = Pt(size)
         paragraph.font.name = FONT_BODY
         paragraph.space_after = Pt(10)
         paragraph.line_spacing = 1.15
+        pPr = paragraph._p.get_or_add_pPr()
+        pPr.set("marL", str(Inches(0.34)))
+        pPr.set("indent", str(-Inches(0.34)))
+        for tag in ("a:buNone", "a:buChar", "a:buAutoNum"):
+            for element in pPr.findall(qn(tag)):
+                pPr.remove(element)
+        pPr.append(pPr.makeelement(qn("a:buFont"), {"typeface": "Arial"}))
+        pPr.append(pPr.makeelement(qn("a:buChar"), {"char": "•"}))
 
 
 def build_deck(
