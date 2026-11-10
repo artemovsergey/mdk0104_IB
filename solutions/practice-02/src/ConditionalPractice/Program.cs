@@ -1,17 +1,43 @@
 ﻿using ConditionalPractice;
 
-// Повторяем запрос, пока не получим корректный балл.
 while (true)
 {
-    Console.Write("Введите балл от 0 до 100: ");
-    string? input = Console.ReadLine();
+    Console.Write("Введите пароль (или exit для выхода): ");
+    string? password = Console.ReadLine();
 
-    if (!ScoreInput.TryParse(input, out int score))
+    if (password == "exit")
     {
-        Console.WriteLine("Ошибка: нужно целое число от 0 до 100.");
+        Console.WriteLine("Проверка завершена.");
+        break;
+    }
+
+    if (string.IsNullOrEmpty(password))
+    {
+        Console.WriteLine("Ошибка: пароль не может быть пустым.");
         continue;
     }
 
-    Console.WriteLine($"Балл: {score}, оценка: {GradeCalculator.GetGrade(score)}");
-    break;
+    if (PasswordValidator.IsStrong(password))
+    {
+        Console.WriteLine("Пароль надёжен.");
+        break;
+    }
+
+    Console.WriteLine("Пароль ненадёжен. Не выполнено:");
+    if (!PasswordValidator.HasMinLength(password))
+    {
+        Console.WriteLine("- минимум 8 символов;");
+    }
+    if (!PasswordValidator.HasDigit(password))
+    {
+        Console.WriteLine("- хотя бы одна цифра;");
+    }
+    if (!PasswordValidator.HasUpper(password))
+    {
+        Console.WriteLine("- хотя бы одна заглавная буква;");
+    }
+    if (!PasswordValidator.HasSpecial(password))
+    {
+        Console.WriteLine("- хотя бы один символ из !@#$%^&*.");
+    }
 }
