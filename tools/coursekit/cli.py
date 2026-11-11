@@ -10,7 +10,7 @@ from pathlib import Path
 from coursekit.model import Document, parse_document
 from coursekit.normalize import normalize_text, normalize_tree
 
-COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "qa", "clean", "build")
+COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "deck-visual", "qa", "clean", "build")
 
 _SECTION_RE = re.compile(r"Раздел\s+(\d+)")
 _KIND_ORDER = {"lecture": 0, "practice": 1, "selfstudy": 2, "exam": 3}
@@ -81,6 +81,17 @@ def build_parser() -> argparse.ArgumentParser:
     deck.add_argument("source", help="markdown-файл колоды")
     deck.add_argument("--config", default="course.yml")
     deck.add_argument("--out", default="dist/pptx")
+
+    visual = sub.add_parser(
+        "deck-visual",
+        help="собрать визуальную презентацию: Markdown → HTML → PDF/PNG → PPTX",
+    )
+    visual.add_argument("source", help="markdown-файл колоды")
+    visual.add_argument("--config", default="course.yml", help="файл конфигурации курса")
+    visual.add_argument("--out", default="dist/pptx", help="каталог результатов")
+    visual.add_argument(
+        "--work", default="", help="каталог промежуточных файлов (по умолчанию build/deck-visual)"
+    )
 
     figures = sub.choices["figures"]
     _add_paths(figures, "dist/figures")
@@ -177,6 +188,25 @@ def _run_deck(args: argparse.Namespace) -> int:
     out = Path(args.out) / (artifact_name(cfg, doc) + ".pptx")
     warnings = build_deck(text, cfg, out, base_dir=source.parent)
     print(out)
+    for warning in warnings:
+        print(f"WARN: {warning}")
+    return 0
+
+
+def _run_deck_visual(args: argparse.Namespace) -> int:
+    from coursekit.config import artifact_name, load_config
+    from coursekit.render_visual_deck import build_visual_deck
+
+    source = Path(args.source)
+    text = source.read_text(encoding="utf-8")
+    normalized, _ = normalize_text(text)
+    cfg = load_config(args.config)
+    doc = parse_document(normalized, source, layout=cfg.layout)
+    out = Path(args.out) / (artifact_name(cfg, doc) + "-visual.pptx")
+    work = Path(args.work) if args.work else Path("build") / "deck-visual" / source.parent.name
+    warnings = build_visual_deck(text, cfg, out, base_dir=source.parent, work_dir=work)
+    print(out)
+    print(out.with_suffix(".pdf"))
     for warning in warnings:
         print(f"WARN: {warning}")
     return 0
@@ -345,6 +375,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_pptx(args)
     if args.command == "deck":
         return _run_deck(args)
+    if args.command == "deck-visual":
+        return _run_deck_visual(args)
     if args.command == "figures":
         return _run_figures(args)
     return 2

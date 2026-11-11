@@ -20,8 +20,11 @@ where = ["."]
 include = ["coursekit*"]
 
 [tool.setuptools.package-data]
-coursekit = ["templates/*"]
+coursekit = ["templates/*", "templates/deck/*", "templates/deck/fonts/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["coursekit/tests"]
+markers = [
+    "integration: тесты, требующие внешних инструментов (Chrome, pandoc, typst)",
+]
 markers = ["integration: требует внешний бинарник (pandoc, typst, mmdc)"]

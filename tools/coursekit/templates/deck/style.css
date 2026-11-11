@@ -1,0 +1,755 @@
+/* ============================================================
+   Coursekit · визуальный рендерер колод — 1600×900 (16:9)
+   Направление утверждено прототипом /tmp/deck-proto.
+   Палитра: navy #0B1533 · light #F7F9FC · cyan #22D3EE
+            purple #8B5CF6 · muted #5B6B85 · callout #FEF3C7
+            code-bg #0F172A
+   ============================================================ */
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("fonts/Montserrat.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("fonts/Inter.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/JetBrainsMono.ttf") format("truetype-variations");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: block;
+}
+
+/* ---------- печать: один слайд = одна страница ---------- */
+
+@page {
+  size: 1600px 900px;
+  margin: 0;
+}
+
+* {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  color: #0B1533;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.slide {
+  position: relative;
+  width: 1600px;
+  height: 900px;
+  overflow: hidden;
+  box-sizing: border-box;
+  page-break-after: always;
+  break-after: page;
+}
+.slide:last-child {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* ---------- общие: верхняя пилюля, иконка, футер ---------- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pill .pill-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #8B5CF6;
+}
+
+.icon-corner {
+  position: absolute;
+  top: 46px;
+  right: 72px;
+  width: 58px;
+  height: 58px;
+}
+
+.footer {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  bottom: 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 16px;
+  font-size: 20px;
+}
+.footer .footer-title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 1100px;
+}
+.footer .footer-page { font-variant-numeric: tabular-nums; }
+
+/* ---------- тёплый callout ---------- */
+
+.callout {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+  border-radius: 18px;
+  padding: 22px 32px;
+  color: #7C4A03;
+  font-size: 23px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+.callout svg { flex: 0 0 auto; }
+.callout b { font-weight: 800; color: #92400E; }
+
+/* ---------- светлый слайд ---------- */
+
+.slide--light {
+  background: #F7F9FC;
+}
+.slide--light .header {
+  position: absolute;
+  top: 48px;
+  left: 72px;
+  right: 72px;
+}
+.slide--light .pill {
+  background: #E7EDF8;
+  color: #2563EB;
+}
+.slide--light .pill .pill-dot { background: #22D3EE; }
+.slide--light h1 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 800;
+  color: #0B1533;
+  margin: 34px 0 0;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+.slide--light .footer {
+  border-top: 1px solid #E2E8F0;
+  color: #93A1B8;
+}
+
+/* размер заголовка подбирается по длине */
+h1.h-size-lg { font-size: 54px; }
+h1.h-size-md { font-size: 46px; }
+h1.h-size-sm { font-size: 38px; }
+
+/* карточки светлых слайдов */
+.card {
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(11, 21, 51, 0.08);
+  box-sizing: border-box;
+}
+
+/* inline-разметка в тексте карточек */
+.inl-code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.86em;
+  background: #EEF2F9;
+  border: 1px solid #DCE4F0;
+  border-radius: 8px;
+  padding: 1px 8px;
+  color: #0B1533;
+  white-space: nowrap;
+}
+
+/* пастельные номера (circle-badge; подсветка кода использует отдельный .num) */
+.numb {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+.num-cyan   { background: #D5F5FC; color: #0E7490; }
+.num-orange { background: #FFE7D3; color: #C2410C; }
+.num-green  { background: #DCF5E3; color: #15803D; }
+.num-purple { background: #E9E2FB; color: #6D28D9; }
+.num-red    { background: #FBE0E3; color: #B91C1C; }
+.num-blue   { background: #DBEAFE; color: #1D4ED8; }
+
+/* цветные номера в заголовках карточек (split-code) */
+.n-cyan   { color: #0891B2; }
+.n-orange { color: #EA580C; }
+.n-green  { color: #16A34A; }
+.n-purple { color: #7C3AED; }
+.n-red    { color: #DC2626; }
+.n-blue   { color: #2563EB; }
+
+/* ============================================================
+   1 · титульный — тёмный navy
+   ============================================================ */
+
+.slide--title {
+  background:
+    radial-gradient(950px 640px at 80% 14%,  rgba(139, 92, 246, 0.30), transparent 62%),
+    radial-gradient(760px 560px at 92% 58%,  rgba(34, 211, 238, 0.16), transparent 60%),
+    radial-gradient(900px 700px at 4% 96%,   rgba(59, 130, 246, 0.22), transparent 62%),
+    radial-gradient(620px 480px at 34% 40%,  rgba(30, 58, 138, 0.28), transparent 70%),
+    #0B1533;
+  color: #E6ECFA;
+}
+
+.title-kicker {
+  position: absolute;
+  top: 58px;
+  left: 72px;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #93A6D4;
+}
+
+.title-headline {
+  position: absolute;
+  top: 120px;
+  left: 72px;
+  right: 430px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 800;
+  font-size: 84px;
+  line-height: 1.06;
+  letter-spacing: -0.018em;
+  margin: 0;
+}
+.title-headline .grad {
+  /* background-clip:text и SVG-fill ломаются в конвейере chrome→pdf→pdftoppm
+     (фон-градиент печатается полосой/прямоугоником), поэтому цвет сплошной cyan */
+  display: block;
+  width: fit-content;
+  color: #22D3EE;
+}
+.title-headline.hd-md { font-size: 72px; }
+.title-headline.hd-sm { font-size: 60px; }
+
+.title-sub {
+  font-size: 37px;
+  font-weight: 500;
+  color: #C4D0ED;
+  margin: 0;
+}
+
+/* подзаголовок и чипы — в общем потоке, чтобы не наезжали при переносе строк */
+.title-copy {
+  position: absolute;
+  top: 350px;
+  left: 72px;
+  right: 430px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.title-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.title-chips span {
+  padding: 13px 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 23px;
+  font-weight: 500;
+  color: #DCE5F8;
+  white-space: nowrap;
+}
+
+/* круглые иконки справа */
+.title-ring {
+  position: absolute;
+  left: 1380px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.title-ring--layers {
+  top: 236px;
+  width: 196px;
+  height: 196px;
+  background: radial-gradient(circle at 50% 45%, rgba(34, 211, 238, 0.16), rgba(34, 211, 238, 0.04) 65%, transparent 75%);
+}
+.title-ring--badge {
+  top: 448px;
+  width: 178px;
+  height: 178px;
+  background: radial-gradient(circle at 50% 45%, rgba(59, 130, 246, 0.20), rgba(59, 130, 246, 0.05) 65%, transparent 75%);
+}
+.title-badge {
+  width: 92px;
+  height: 92px;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #3B82F6, #1D4ED8);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 800;
+  font-size: 40px;
+  color: #FFFFFF;
+}
+
+/* панель с кодом */
+.title-code {
+  position: absolute;
+  left: 100px;
+  top: 640px;
+  width: 760px;
+  border-radius: 18px;
+  background: rgba(17, 28, 56, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.30);
+  padding: 26px 30px;
+  box-sizing: border-box;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 22px;
+  line-height: 1.85;
+  color: #D7E0F4;
+  white-space: pre;
+  overflow: hidden;
+}
+.title-code .cmt  { color: #7C8CB5; font-style: italic; }
+.title-code .var  { color: #FFFFFF; font-weight: 700; }
+.title-code .kw   { color: #22D3EE; }
+.title-code .op   { color: #8FA0C9; }
+.title-code .pp   { color: #8B5CF6; }
+
+.slide--title .footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  color: #8B9CC8;
+}
+
+/* ============================================================
+   2 · план — светлый, сетка карточек + callout с целью
+   ============================================================ */
+
+.plan-grid {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 240px;
+  bottom: 176px;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(var(--cols, 3), 1fr);
+  grid-template-rows: repeat(var(--rows, 1), 1fr);
+}
+.plan-grid .card {
+  padding: 28px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.plan-grid .numb {
+  width: 52px;
+  height: 52px;
+  font-size: 26px;
+  margin-bottom: 20px;
+}
+.plan-grid h3 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.28;
+  margin: 0;
+  color: #0B1533;
+}
+.plan-grid p {
+  font-size: 19px;
+  line-height: 1.45;
+  color: #5B6B85;
+  margin: 12px 0 0;
+}
+.plan-grid.two-rows .numb {
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  margin-bottom: 14px;
+}
+.plan-grid.two-rows h3 { font-size: 21px; }
+.plan-grid.two-rows p { font-size: 17px; margin-top: 10px; }
+
+.slide--plan .callout {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 726px;
+}
+
+/* ============================================================
+   3 · image — схема крупно по центру
+   ============================================================ */
+
+.image-body {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 212px;
+  bottom: 108px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+.image-body img {
+  max-width: 100%;
+  max-height: 600px;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(11, 21, 51, 0.16);
+  background: #FFFFFF;
+}
+.image-caption {
+  font-size: 21px;
+  color: #5B6B85;
+  margin: 0;
+}
+
+/* ============================================================
+   4 · split-code — тёмная панель кода + карточки-правила
+   ============================================================ */
+
+.code-panel {
+  background: #0F172A;
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(11, 21, 51, 0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+.code-panel-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 22px 14px;
+  background: #131C31;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.dot { width: 18px; height: 18px; border-radius: 50%; }
+.dot-r { background: #FF5F57; }
+.dot-y { background: #FEBC2E; }
+.dot-g { background: #28C840; }
+.code-panel-name {
+  margin-left: 12px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 20px;
+  color: #8CA0C4;
+}
+.code-panel pre {
+  margin: 0;
+  flex: 1 1 auto;
+  padding: 24px 26px 26px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 20px;
+  line-height: 1.62;
+  color: #D7E0F4;
+  white-space: pre;
+  overflow: hidden;
+}
+/* упрощённая подсветка (общая для панелей кода и титульной панели) */
+.code-panel .cmd, .title-code .cmd  { color: #FFFFFF; font-weight: 700; }
+.code-panel .dollar, .title-code .dollar { color: #7C8CB5; }
+.code-panel .cmt, .title-code .cmt  { color: #7C8CB5; font-style: italic; }
+.code-panel .str, .title-code .str  { color: #A5F3A2; }
+.code-panel .num, .title-code .num  { color: #22D3EE; font-weight: 700; }
+.code-panel .flag, .title-code .flag { color: #8B5CF6; }
+.code-panel .ok, .title-code .ok   { color: #4ADE80; font-weight: 700; }
+.code-panel .fail, .title-code .fail { color: #F87171; font-weight: 700; }
+.code-panel .warn, .title-code .warn { color: #FBBF24; font-weight: 700; }
+.code-panel .dim, .title-code .dim  { color: #7C8CB5; }
+
+.output-cols {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 252px;
+  bottom: 118px;
+  display: flex;
+  gap: 40px;
+}
+.output-cols .code-panel {
+  flex: 0 0 750px;
+}
+.output-rules {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.output-rules .card {
+  flex: 1 1 0;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+.output-rules h3 {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: 23px;
+  margin: 0 0 8px;
+  color: #0B1533;
+}
+.output-rules h3 .n { font-weight: 800; }
+.output-rules p {
+  font-size: 20px;
+  line-height: 1.45;
+  color: #5B6B85;
+  margin: 0;
+}
+
+/* код на всю ширину + один вывод снизу */
+.code-full {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 232px;
+  bottom: 108px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 26px;
+}
+.code-full .code-panel {
+  flex: 0 0 auto;
+}
+.code-full .takeaway {
+  flex: 0 0 auto;
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(11, 21, 51, 0.08);
+  padding: 24px 30px;
+  font-size: 23px;
+  line-height: 1.4;
+  color: #0B1533;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-sizing: border-box;
+}
+.code-full .takeaway .tk-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(94deg, #22D3EE, #8B5CF6);
+  flex: 0 0 auto;
+}
+
+/* ============================================================
+   5 · cards — сетка белых карточек с номерами
+   ============================================================ */
+
+.cards-grid {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 248px;
+  bottom: 118px;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(var(--cols, 2), 1fr);
+  grid-auto-rows: 1fr;
+}
+.cards-grid .card {
+  padding: 24px 30px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 0;
+}
+.cards-grid .numb {
+  width: 52px;
+  height: 52px;
+  font-size: 25px;
+}
+.cards-grid .card-text {
+  font-size: var(--card-font, 22px);
+  line-height: 1.4;
+  color: #22304A;
+  font-weight: 500;
+}
+.cards-grid .span2 {
+  grid-column: span 2;
+}
+
+/* ============================================================
+   6 · summary — 6 карточек 3×2 с крупными номерами
+   ============================================================ */
+
+.summary-grid {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 248px;
+  bottom: 118px;
+  display: grid;
+  gap: 26px;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;
+}
+.summary-grid .card {
+  padding: 26px 26px 22px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.summary-grid .numb {
+  width: 64px;
+  height: 64px;
+  font-size: 32px;
+  margin-bottom: 18px;
+}
+.summary-grid .card-text {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1.3;
+  color: #0B1533;
+}
+
+/* ============================================================
+   7 · questions — вопросы в две колонки
+   ============================================================ */
+
+.questions-grid {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 248px;
+  bottom: 118px;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 1fr;
+}
+.questions-grid .card {
+  padding: 24px 30px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 0;
+}
+.questions-grid .numb {
+  width: 52px;
+  height: 52px;
+  font-size: 24px;
+}
+.questions-grid .card-text {
+  font-size: 22px;
+  line-height: 1.4;
+  color: #22304A;
+  font-weight: 500;
+}
+
+/* ============================================================
+   8 · statement — крупный тезис + опорные пункты
+   ============================================================ */
+
+.statement {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  top: 248px;
+  bottom: 118px;
+  display: flex;
+  align-items: center;
+  gap: 44px;
+}
+.statement .statement-main {
+  flex: 1.05 1 0;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  color: #0B1533;
+  min-width: 0;
+}
+.statement .st-num {
+  width: 64px;
+  height: 64px;
+  font-size: 30px;
+}
+.statement .statement-side {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-self: stretch;
+  justify-content: center;
+  min-width: 0;
+}
+.statement .statement-side .card {
+  flex: 1 1 0;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 0;
+}
+.statement .statement-side .numb {
+  width: 48px;
+  height: 48px;
+  font-size: 23px;
+}
+.statement .statement-side .card-text {
+  font-size: 22px;
+  line-height: 1.4;
+  color: #22304A;
+  font-weight: 500;
+}
+.statement.statement--solo {
+  justify-content: flex-start;
+}
+.statement.statement--solo .statement-main {
+  flex: 1 1 auto;
+  font-size: 54px;
+}
