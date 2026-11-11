@@ -13,7 +13,8 @@ _FENCE = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
 _LINK = re.compile(r"(?<!!)\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 _IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 _STALE = re.compile(
-    r"net[89]\.0|visual studio|chromedriver|docker", re.IGNORECASE
+    r"net[89]\.0|visual studio(?!\s+code)|chromedriver|docker(?![- ]compose)",
+    re.IGNORECASE,
 )
 _TODO = re.compile(r"\b(TODO|FIXME|XXX)\b")
 _CYRILLIC = re.compile(r"[А-Яа-яЁё]")

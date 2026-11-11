@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from coursekit.model import parse_document
-from coursekit.qa import has_errors, run_qa
+from coursekit.qa import _STALE, has_errors, run_qa
 
 
 def _doc(md: str, name: str = "Лекция 1.md"):
@@ -60,3 +60,12 @@ def test_angle_bracket_image_is_not_missing(tmp_path: Path):
     doc = _doc(f"# Лекция 1\n\n![Схема 1](<{image.as_posix()}>)\n")
     issues = run_qa([doc], tmp_path)
     assert not [i for i in issues if i.code == "IMAGE_MISSING"]
+
+
+def test_stale_stack_ignores_current_terms():
+    assert not _STALE.search("Visual Studio Code")
+    assert not _STALE.search("docker-compose.yml")
+    assert not _STALE.search("net10.0")
+    assert _STALE.search("Visual Studio 2022")
+    assert _STALE.search("Docker")
+    assert _STALE.search("net8.0")
