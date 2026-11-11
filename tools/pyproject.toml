@@ -27,4 +27,3 @@ testpaths = ["coursekit/tests"]
 markers = [
     "integration: тесты, требующие внешних инструментов (Chrome, pandoc, typst)",
 ]
-markers = ["integration: требует внешний бинарник (pandoc, typst, mmdc)"]
