@@ -1,0 +1,23 @@
+name: Практика 2 — эталон
+
+on:
+  push:
+    paths:
+      - "solutions/practice-02/**"
+      - ".github/workflows/practice-02.yml"
+  pull_request:
+    paths:
+      - "solutions/practice-02/**"
+      - ".github/workflows/practice-02.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Тесты эталона
+        run: dotnet test solutions/practice-02/ConditionalPractice.slnx --nologo --verbosity minimal

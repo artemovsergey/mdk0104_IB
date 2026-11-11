@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ConditionalPractice/ConditionalPractice.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ConditionalPractice.Tests/ConditionalPractice.Tests.csproj" />
+  </Folder>
+</Solution>
