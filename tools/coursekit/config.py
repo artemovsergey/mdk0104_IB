@@ -78,6 +78,7 @@ class CourseConfig:
     pptx: bool = True
     figures: bool = True
     book: bool = False
+    layout: str = "sections"
 
 
 def load_config(path: Path | str = Path("course.yml")) -> CourseConfig:
@@ -103,6 +104,7 @@ def load_config(path: Path | str = Path("course.yml")) -> CourseConfig:
         pptx=bool(build.get("pptx", True)),
         figures=bool(build.get("figures", True)),
         book=bool(build.get("book", False)),
+        layout=str(course.get("layout", "sections")),
     )
 
 
@@ -112,6 +114,11 @@ _KIND_SLUG = {
     "practice": "practice",
     "selfstudy": "selfstudy",
     "exam": "exam",
+    "week-lecture": "lecture",
+    "week-practice": "practice",
+    "week-selfcheck": "selfcheck",
+    "week-results": "results",
+    "meta": "meta",
 }
 
 
@@ -120,6 +127,8 @@ def artifact_name(cfg: CourseConfig, doc: "Document") -> str:
     kind = _KIND_SLUG.get(doc.kind, "doc")
     if doc.kind == "exam":
         return f"{cfg.repo_slug}-exam"
+    if cfg.layout == "weeks":
+        return f"{cfg.repo_slug}-w{doc.number:02d}-{kind}"
     match = _SECTION_RE.search(str(doc.path))
     if not match:
         return f"{cfg.repo_slug}-{kind}-{doc.number:02d}"

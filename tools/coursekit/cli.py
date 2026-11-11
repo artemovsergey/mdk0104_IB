@@ -24,14 +24,20 @@ def _section_of(path: Path) -> int:
     return 99
 
 
-def collect_docs(root: Path = Path("course")) -> list[Document]:
+def collect_docs(root: Path = Path("course"), layout: str = "sections") -> list[Document]:
     """Читает markdown курса, нормализует в памяти и сохраняет исходные пути."""
     docs = []
     for source in sorted(Path(root).rglob("*.md")):
         text = source.read_text(encoding="utf-8")
         normalized, _ = normalize_text(text)
-        docs.append(parse_document(normalized, source))
-    docs.sort(key=lambda doc: (_section_of(doc.path), _KIND_ORDER.get(doc.kind, 9), doc.number))
+        docs.append(parse_document(normalized, source, layout=layout))
+    docs.sort(
+        key=lambda doc: (
+            doc.number if layout == "weeks" else _section_of(doc.path),
+            _KIND_ORDER.get(doc.kind, 9),
+            doc.number,
+        )
+    )
     return docs
 
 
@@ -106,9 +112,12 @@ def _collect(args: argparse.Namespace):
     from coursekit.config import load_config
 
     cfg = load_config(Path(args.config))
-    docs = collect_docs(Path(args.source))
+    docs = collect_docs(Path(args.source), layout=cfg.layout)
     if args.section is not None:
-        docs = [doc for doc in docs if _section_of(doc.path) == args.section]
+        if cfg.layout == "weeks":
+            docs = [doc for doc in docs if doc.number == args.section]
+        else:
+            docs = [doc for doc in docs if _section_of(doc.path) == args.section]
     return cfg, docs
 
 
@@ -147,7 +156,7 @@ def _run_pptx(args: argparse.Namespace) -> int:
     from coursekit.render_pptx import build_pptx
 
     cfg, docs = _collect(args)
-    docs = [doc for doc in docs if doc.kind == "lecture"]
+    docs = [doc for doc in docs if doc.kind in ("lecture", "week-lecture")]
     out_dir = Path(args.out)
     for doc in docs:
         name = artifact_name(cfg, doc) + ".pptx"
@@ -163,8 +172,8 @@ def _run_deck(args: argparse.Namespace) -> int:
     source = Path(args.source)
     text = source.read_text(encoding="utf-8")
     normalized, _ = normalize_text(text)
-    doc = parse_document(normalized, source)
     cfg = load_config(args.config)
+    doc = parse_document(normalized, source, layout=cfg.layout)
     out = Path(args.out) / (artifact_name(cfg, doc) + ".pptx")
     warnings = build_deck(text, cfg, out, base_dir=source.parent)
     print(out)
@@ -204,7 +213,10 @@ def _run_normalize(args: argparse.Namespace) -> int:
 def _run_qa(args: argparse.Namespace) -> int:
     from coursekit.qa import has_errors, render_report, run_qa
 
-    docs = collect_docs(Path("course"))
+    from coursekit.config import load_config
+
+    cfg = load_config(Path(getattr(args, "config", "course.yml")))
+    docs = collect_docs(Path("course"), layout=cfg.layout)
     issues = run_qa(docs, Path("course"))
     render_report(issues, Path("dist/qa-report.md"))
     for issue in issues:
@@ -249,9 +261,12 @@ def build(
 
     normalize_tree(source_dir, Path("build/normalized"))
 
-    docs = collect_docs(source_dir)
+    docs = collect_docs(source_dir, layout=cfg.layout)
     if section is not None:
-        docs = [doc for doc in docs if _section_of(doc.path) == section]
+        if cfg.layout == "weeks":
+            docs = [doc for doc in docs if doc.number == section]
+        else:
+            docs = [doc for doc in docs if _section_of(doc.path) == section]
 
     docs = [prepare_doc(doc, dist / "figures") for doc in docs]
 
@@ -268,7 +283,7 @@ def build(
             build_pdf(doc, cfg, path, Path("build/pdf-work"))
             artifacts.append(path)
             print(path)
-        if "pptx" in stages and doc.kind == "lecture":
+        if "pptx" in stages and doc.kind in ("lecture", "week-lecture"):
             path = dist / "pptx" / f"{stem}.pptx"
             build_pptx(doc, cfg, path)
             artifacts.append(path)

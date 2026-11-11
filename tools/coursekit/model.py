@@ -45,6 +45,19 @@ PROFILES: dict[str, Profile] = {
         required=("Варианты заданий", "Критерии оценки"),
         recommended=("Цель работы",),
     ),
+    "week-lecture": Profile(
+        kind="week-lecture",
+        required=("Разобранный пример",),
+        recommended=("Зачем этот навык", "Термины", "Типичные ошибки"),
+    ),
+    "week-practice": Profile(
+        kind="week-practice",
+        required=("Предусловия", "Шаги", "Границы", "Критерий готовности"),
+        recommended=("Резервный сценарий",),
+    ),
+    "week-selfcheck": Profile(kind="week-selfcheck", required=(), recommended=()),
+    "week-results": Profile(kind="week-results", required=(), recommended=()),
+    "meta": Profile(kind="meta", required=(), recommended=()),
 }
 
 
@@ -89,6 +102,21 @@ _ALIASES = {
 }
 
 
+_ALIASES.update(
+    {
+        "разобранный пример": "Разобранный пример",
+        "зачем этот навык": "Зачем этот навык",
+        "термины": "Термины",
+        "типичные ошибки": "Типичные ошибки",
+        "предусловия": "Предусловия",
+        "шаги": "Шаги",
+        "границы": "Границы",
+        "критерий готовности": "Критерий готовности",
+        "резервный сценарий": "Резервный сценарий",
+    }
+)
+
+
 @dataclass
 class Section:
     level: int
@@ -130,7 +158,17 @@ def _clean_title(title: str) -> str:
     return cleaned.rstrip(":").strip()
 
 
-def detect_kind(path: Path) -> str:
+def detect_kind(path: Path, layout: str = "sections") -> str:
+    if layout == "weeks":
+        if "_template" in path.parts:
+            return "meta"
+        mapping = {
+            "lecture.md": "week-lecture",
+            "practice.md": "week-practice",
+            "self-check.md": "week-selfcheck",
+            "results.md": "week-results",
+        }
+        return mapping.get(path.name.lower(), "meta")
     name = path.name
     for kind, pattern in _KIND_PATTERNS:
         if pattern.search(name):
@@ -138,7 +176,13 @@ def detect_kind(path: Path) -> str:
     return "practice"
 
 
-def detect_number(path: Path) -> int:
+def detect_number(path: Path, layout: str = "sections") -> int:
+    if layout == "weeks":
+        for part in path.parts:
+            match = re.fullmatch(r"week-(\d+)", part, re.IGNORECASE)
+            if match:
+                return int(match.group(1))
+        return 0
     match = _NUMBER_RE.search(path.name)
     return int(match.group(1)) if match else 0
 
@@ -150,6 +194,11 @@ def canonical_title(title: str, kind: str | None = None) -> str | None:
     if canonical is None:
         key = re.sub(r"^\d+(?:\.\d+)*\.?\s+", "", key)
         canonical = _ALIASES.get(key)
+    if canonical is None:
+        for alias, value in _ALIASES.items():
+            if key.startswith(alias + ":"):
+                canonical = value
+                break
     if canonical == "Цель работы" and kind == "lecture":
         return "Цель лекции"
     return canonical
@@ -176,8 +225,8 @@ def _headings(text: str) -> list[tuple[int, int, str]]:
     return result
 
 
-def parse_document(text: str, path: Path) -> Document:
-    kind = detect_kind(path)
+def parse_document(text: str, path: Path, layout: str = "sections") -> Document:
+    kind = detect_kind(path, layout)
     headings = _headings(text)
     lines = text.splitlines()
 
@@ -207,7 +256,7 @@ def parse_document(text: str, path: Path) -> Document:
     return Document(
         path=path,
         kind=kind,
-        number=detect_number(path),
+        number=detect_number(path, layout),
         title=title,
         sections=sections,
         raw=text,
