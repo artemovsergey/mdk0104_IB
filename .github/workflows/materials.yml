@@ -31,10 +31,11 @@ jobs:
 
       - uses: typst-community/setup-typst@v3
 
-      - name: Системные зависимости
+      - name: Установка pandoc
         run: |
-          sudo apt-get update
-          sudo apt-get install -y pandoc poppler-utils fonts-liberation
+          curl -fsSL https://github.com/jgm/pandoc/releases/download/3.1.3/pandoc-3.1.3-linux-amd64.tar.gz -o /tmp/pandoc.tar.gz
+          sudo tar -xzf /tmp/pandoc.tar.gz -C /usr/local --strip-components=1
+          pandoc --version | head -1
 
       - name: Установка coursekit
         run: pip install -e "tools[dev]"
