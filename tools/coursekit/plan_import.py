@@ -105,10 +105,26 @@ def import_plan(root: Path, ktp: dict[str, Any] | None = None) -> Plan:
     sections = []
     for section_number in sorted(collected):
         bucket = collected[section_number]
+        ktp_order = {
+            (str(item.get("kind")), int(item.get("number", 0))): index
+            for index, item in enumerate(
+                (ktp_sections.get(section_number) or {}).get("lessons") or ()
+            )
+        }
         lessons = sorted(
             bucket["lessons"],
-            key=lambda item: (item["kind"] != "lecture", item["number"]),
+            key=lambda item: (
+                ktp_order.get((item["kind"], item["number"]), 1000),
+                item["kind"] != "lecture",
+                item["number"],
+            ),
         )
+        last_lecture: str | None = None
+        for item in lessons:
+            if item["kind"] == "lecture":
+                last_lecture = item["id"]
+            elif item["kind"] in ("practice", "selfstudy") and last_lecture:
+                item.setdefault("prerequisites", (last_lecture,))
         sections.append(
             Section(
                 number=section_number,
@@ -121,6 +137,7 @@ def import_plan(root: Path, ktp: dict[str, Any] | None = None) -> Plan:
                         number=item["number"],
                         title=item["title"],
                         hours=item["hours"],
+                        prerequisites=tuple(item.get("prerequisites", ())),
                         file=item.get("file"),
                         planned=bool(item.get("planned", False)),
                     )
@@ -142,6 +159,15 @@ def import_plan(root: Path, ktp: dict[str, Any] | None = None) -> Plan:
             if key in (ktp.get("hours") or {}):
                 hours[key] = int(ktp["hours"][key])
     course = {str(key): str(value) for key, value in ((ktp or {}).get("course") or {}).items()}
+    config_path = root / "course.yml"
+    if not course and config_path.exists():
+        import yaml
+
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+        course = {
+            str(key): str(value)
+            for key, value in (config.get("course") or {}).items()
+        }
     return Plan(
         schema=PLAN_SCHEMA,
         course=course,
