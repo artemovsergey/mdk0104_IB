@@ -5,7 +5,6 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { chromium } from "playwright";
 
 const SECRET_PATTERNS = [
   /ghp_[A-Za-z0-9]{10,}/,
@@ -75,6 +74,8 @@ function commandHtml(title, output) {
 }
 
 async function ensureBrowser() {
+  // Playwright грузится по требованию: проверка секретов работает и без неё.
+  const { chromium } = await import("playwright");
   return chromium.launch({ args: ["--no-sandbox"] });
 }
 
