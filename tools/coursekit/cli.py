@@ -10,7 +10,7 @@ from pathlib import Path
 from coursekit.model import Document, parse_document
 from coursekit.normalize import normalize_text, normalize_tree
 
-COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "deck-visual", "qa", "clean", "build", "plan")
+COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "deck-visual", "qa", "clean", "build", "plan", "ktp")
 
 _SECTION_RE = re.compile(r"Раздел\s+(\d+)")
 _KIND_ORDER = {"lecture": 0, "practice": 1, "selfstudy": 2, "exam": 3}
@@ -78,6 +78,11 @@ def build_parser() -> argparse.ArgumentParser:
     plan_cmd.add_argument("--from", dest="from_", default="course", help="каталог корпуса")
     plan_cmd.add_argument("--force", action="store_true", help="перезаписать plan.yml")
     plan_cmd.add_argument("--path", default="plan.yml", help="файл плана")
+
+    ktp_cmd = sub.add_parser("ktp", help="разобрать КТП в ktp.yml")
+    ktp_cmd.add_argument("path", help="файл КТП (.docx или .html)")
+    ktp_cmd.add_argument("--out", default="ktp.yml", help="файл результата")
+    ktp_cmd.add_argument("--source", default="", help="имя исходного документа")
 
     normalize = sub.add_parser("normalize", help="нормализовать markdown")
     normalize.add_argument("--check", action="store_true", help="только проверить")
@@ -286,6 +291,21 @@ def _run_clean(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_ktp(args: argparse.Namespace) -> int:
+    from coursekit.ktp import KtpError, dump_ktp, parse_ktp
+
+    path = Path(args.path)
+    try:
+        ktp = parse_ktp(path)
+    except KtpError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+    source = args.source or path.name
+    dump_ktp(ktp, Path(args.out), source, str(ktp.get("parsed", "")))
+    print(args.out)
+    return 0
+
+
 def _run_plan(args: argparse.Namespace) -> int:
     import json
 
@@ -428,6 +448,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_clean(args)
     if args.command == "plan":
         return _run_plan(args)
+    if args.command == "ktp":
+        return _run_ktp(args)
     if args.command == "build":
         only = {item.strip() for item in args.only.split(",") if item.strip()}
         return build(
