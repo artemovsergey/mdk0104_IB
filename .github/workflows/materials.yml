@@ -32,6 +32,14 @@ jobs:
           cache: pip
           cache-dependency-path: tools/pyproject.toml
 
+      - uses: typst-community/setup-typst@v3
+
+      - name: Установка pandoc
+        run: |
+          curl -fsSL https://github.com/jgm/pandoc/releases/download/3.1.3/pandoc-3.1.3-linux-amd64.tar.gz -o /tmp/pandoc.tar.gz
+          sudo tar -xzf /tmp/pandoc.tar.gz -C /usr/local --strip-components=1
+          pandoc --version | head -1
+
       - name: Установка coursekit
         run: pip install -e "tools[dev]"
 
