@@ -139,3 +139,17 @@ E E-HOURS-KIND часы «theory» в шапке: 78, а по занятиям �
 ~/work/.venv/bin/pip install -e "tools[dev]"
 PYTHONPATH=tools ~/work/.venv/bin/python -m pytest tools/coursekit/tests -q
 ```
+
+## План эталонного курса
+
+`ktp.yml` собран из «КТП по МДК.01.04 (ИБ).docx» командой `coursekit ktp`,
+`plan.yml` — командой `coursekit plan --import`, ссылки занятий перенесены
+в `sources.yml`. Текущее состояние:
+
+```text
+PYTHONPATH=tools python3 -m coursekit plan --check --against ktp.yml
+# 0 E, 0 W, 0 D
+```
+
+Отчёт для учебной части — `docs/ktp-diff.md` (перегенерируется той же
+командой с `--json docs/plan-report.json`).

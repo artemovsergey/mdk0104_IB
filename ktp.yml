@@ -1,0 +1,98 @@
+schema: 1
+source: КТП по МДК.01.04 (ИБ).docx
+parsed: pandoc-html
+course: {}
+hours:
+  total: 36
+  teacher: 36
+  theory: 10
+  practice: 24
+  course_design: 0
+  selfstudy: 2
+  consultation: 0
+  exam: 0
+sections:
+- number: 1
+  title: Основы .NET и С#
+  lessons:
+  - kind: lecture
+    number: 1
+    title: Лекция 1. Основы C# и .NET, типы данных
+    hours: 2
+  - kind: practice
+    number: 1
+    title: Практическая работа 1. Работа с типами данных и преобразованиями
+    hours: 2
+  - kind: lecture
+    number: 2
+    title: Лекция 2. Условные выражения, циклы и структуры данных
+    hours: 2
+  - kind: practice
+    number: 2
+    title: Практическая работа 2. Управление потоком выполнения
+    hours: 2
+  - kind: selfstudy
+    number: 1
+    title: Самостоятельная работа 1. Консольный калькулятор
+    hours: 2
+- number: 2
+  title: ООП
+  lessons:
+  - kind: lecture
+    number: 3
+    title: Лекция 3. ООП
+    hours: 2
+  - kind: practice
+    number: 3
+    title: Практическая работа 3. Создание классов и объектов
+    hours: 2
+  - kind: practice
+    number: 4
+    title: Практическая работа 4. Реализация наследования и виртуальных методов
+    hours: 2
+  - kind: practice
+    number: 5
+    title: Практическая работа 5. Создание интерфейсов и абстрактных классов
+    hours: 2
+- number: 3
+  title: Многопоточность и асинхронность
+  lessons:
+  - kind: lecture
+    number: 4
+    title: Лекция 4. Основы многопоточности и асинхронности
+    hours: 2
+  - kind: practice
+    number: 6
+    title: Практическая работа 6. Создание и управление потоками
+    hours: 2
+  - kind: practice
+    number: 7
+    title: Практическая работа 7. Синхронизация потоков (lock, Monitor, Mutex)
+    hours: 2
+  - kind: practice
+    number: 8
+    title: Практическая работа 8. Использование Task и async/await
+    hours: 2
+- number: 4
+  title: Работа с базами данных. Entity Framework Core
+  lessons:
+  - kind: lecture
+    number: 5
+    title: Лекция 5. Entity Framework Core. ORM для C#
+    hours: 2
+  - kind: practice
+    number: 9
+    title: Практическая работа 9. Подходы CodeFirst и DatabaseFirst
+    hours: 2
+  - kind: practice
+    number: 10
+    title: Практическая работа 10. Конфигурирование базы данных
+    hours: 2
+  - kind: practice
+    number: 11
+    title: Практическая работа 11. Разработка RestAPI
+    hours: 2
+  - kind: practice
+    number: 12
+    title: Практическая работа 12. Сортировка, фильтрация, поиск, пагинация
+    hours: 2

@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "summary": {
+    "sections": 4,
+    "lessons": 18,
+    "by_kind": {
+      "lecture": 5,
+      "practice": 12,
+      "selfstudy": 1
+    },
+    "with_file": 18,
+    "planned": 0,
+    "hours": {
+      "total": 36,
+      "theory": 10,
+      "practice": 24,
+      "course_design": 0,
+      "selfstudy": 2,
+      "consultation": 0,
+      "exam": 0
+    }
+  },
+  "issues": []
+}
