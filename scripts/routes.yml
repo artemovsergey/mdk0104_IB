@@ -1,0 +1,9 @@
+# Маршруты для скриншотов: node scripts/shot.mjs --routes scripts/routes.yml
+# name — имя файла без .png, command или url — что снимать.
+routes:
+  - name: dotnet-version
+    command: dotnet --version
+  - name: dotnet-info
+    command: dotnet --info | head -20
+  - name: git-log
+    command: git log --oneline -10
