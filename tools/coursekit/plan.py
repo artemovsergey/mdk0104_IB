@@ -283,6 +283,122 @@ def validate_plan(plan: Plan, root: Path) -> list[Issue]:
     return issues
 
 
+def load_ktp(path: Path) -> dict[str, Any]:
+    try:
+        raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise PlanError(f"{path}: КТП не разбирается как YAML: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise PlanError(f"{path}: корень ktp.yml должен быть словарём")
+    return raw
+
+
+def _section_lessons(section: dict[str, Any]) -> list[dict[str, Any]]:
+    return [dict(item) for item in section.get("lessons") or ()]
+
+
+def compare_with_ktp(plan: Plan, ktp: dict[str, Any]) -> list[Issue]:
+    issues: list[Issue] = []
+    plan_sections = {section.number: section for section in plan.sections}
+    ktp_sections = {
+        int(section["number"]): section for section in ktp.get("sections") or ()
+    }
+    for number in sorted(set(plan_sections) | set(ktp_sections)):
+        plan_section = plan_sections.get(number)
+        ktp_section = ktp_sections.get(number)
+        if ktp_section is None:
+            if plan_section is not None:
+                for lesson in plan_section.lessons:
+                    issues.append(
+                        Issue(
+                            "D",
+                            "D-ADDED",
+                            f"раздел {number}: занятие «{lesson.title}» добавлено относительно КТП",
+                            lesson.id,
+                        )
+                    )
+            continue
+        if plan_section is None:
+            for raw in _section_lessons(ktp_section):
+                issues.append(
+                    Issue(
+                        "D",
+                        "D-REMOVED",
+                        f"раздел {number}: занятие «{raw.get('title')}» убрано из плана",
+                    )
+                )
+            continue
+        plan_by_key = {
+            (lesson.kind, lesson.number): lesson for lesson in plan_section.lessons
+        }
+        ktp_by_key: dict[tuple[str, int], dict[str, Any]] = {}
+        ktp_index: dict[tuple[str, int], int] = {}
+        for index, raw in enumerate(_section_lessons(ktp_section)):
+            key = (str(raw.get("kind")), int(raw.get("number", 0)))
+            ktp_by_key[key] = raw
+            ktp_index[key] = index
+        plan_index = {
+            (lesson.kind, lesson.number): index
+            for index, lesson in enumerate(plan_section.lessons)
+        }
+        for key, lesson in plan_by_key.items():
+            raw = ktp_by_key.get(key)
+            if raw is None:
+                issues.append(
+                    Issue(
+                        "D",
+                        "D-ADDED",
+                        f"раздел {number}: занятие «{lesson.title}» добавлено относительно КТП",
+                        lesson.id,
+                    )
+                )
+                continue
+            ktp_hours = int(raw.get("hours", 0))
+            if ktp_hours != lesson.hours:
+                issues.append(
+                    Issue(
+                        "D",
+                        "D-HOURS",
+                        f"раздел {number}: «{lesson.title}» — часы {ktp_hours} → {lesson.hours}",
+                        lesson.id,
+                    )
+                )
+            if ktp_index[key] != plan_index[key]:
+                issues.append(
+                    Issue(
+                        "D",
+                        "D-MOVED",
+                        f"раздел {number}: «{lesson.title}» переставлено "
+                        f"({ktp_index[key] + 1} → {plan_index[key] + 1})",
+                        lesson.id,
+                    )
+                )
+        for key, raw in ktp_by_key.items():
+            if key not in plan_by_key:
+                issues.append(
+                    Issue(
+                        "D",
+                        "D-REMOVED",
+                        f"раздел {number}: занятие «{raw.get('title')}» убрано из плана",
+                    )
+                )
+        for kind in LESSON_KINDS:
+            plan_count = sum(1 for lesson in plan_section.lessons if lesson.kind == kind)
+            ktp_count = sum(
+                1 for key in ktp_by_key if key[0] == kind
+            )
+            if plan_count != ktp_count:
+                issues.append(
+                    Issue(
+                        "D",
+                        "D-COUNT",
+                        f"раздел {number}: занятий вида «{kind}» "
+                        f"в КТП {ktp_count}, в плане {plan_count}",
+                    )
+                )
+    return issues
+
+
 def load_plan(path: Path) -> Plan:
     try:
         raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
