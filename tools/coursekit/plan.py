@@ -92,6 +92,121 @@ def _section(raw: dict[str, Any]) -> Section:
     )
 
 
+LESSON_KINDS = (
+    "lecture",
+    "practice",
+    "selfstudy",
+    "coursedesign",
+    "consultation",
+    "exam",
+)
+
+_HOUR_KIND = {
+    "theory": "lecture",
+    "practice": "practice",
+    "course_design": "coursedesign",
+    "selfstudy": "selfstudy",
+}
+
+
+def _hours_issues(plan: Plan) -> list[Issue]:
+    issues: list[Issue] = []
+    actual: dict[str, int] = {kind: 0 for kind in LESSON_KINDS}
+    for lesson in plan.lessons:
+        if lesson.kind in actual:
+            actual[lesson.kind] += lesson.hours
+    for key, kind in _HOUR_KIND.items():
+        expected = int(plan.hours.get(key, 0))
+        if actual[kind] != expected:
+            issues.append(
+                Issue(
+                    level="E",
+                    code="E-HOURS-KIND",
+                    message=(
+                        f"часы «{key}» в шапке: {expected}, "
+                        f"а по занятиям вида «{kind}»: {actual[kind]}"
+                    ),
+                )
+            )
+    total = (
+        int(plan.hours.get("theory", 0))
+        + int(plan.hours.get("practice", 0))
+        + int(plan.hours.get("course_design", 0))
+        + int(plan.hours.get("selfstudy", 0))
+    )
+    declared = int(plan.hours.get("total", 0))
+    if declared != total:
+        issues.append(
+            Issue(
+                level="E",
+                code="E-HOURS-TOTAL",
+                message=f"total в шапке: {declared}, а сумма разделов: {total}",
+            )
+        )
+    return issues
+
+
+def _order_issues(plan: Plan) -> list[Issue]:
+    issues: list[Issue] = []
+    seen_ids: set[str] = set()
+    seen_numbers: set[tuple[str, int]] = set()
+    position: dict[str, int] = {}
+    indexed = list(enumerate(plan.lessons))
+    for index, lesson in indexed:
+        position.setdefault(lesson.id, index)
+        if lesson.id in seen_ids:
+            issues.append(
+                Issue("E", "E-DUP-ID", f"идентификатор «{lesson.id}» повторяется", lesson.id)
+            )
+        seen_ids.add(lesson.id)
+        key = (lesson.kind, lesson.number)
+        if key in seen_numbers:
+            issues.append(
+                Issue(
+                    "E",
+                    "E-DUP-NUMBER",
+                    f"номер {lesson.number} у вида «{lesson.kind}» повторяется",
+                    lesson.id,
+                )
+            )
+        seen_numbers.add(key)
+        if lesson.kind not in LESSON_KINDS:
+            issues.append(
+                Issue(
+                    "E",
+                    "E-KIND",
+                    f"неизвестный вид занятия «{lesson.kind}»",
+                    lesson.id,
+                )
+            )
+    for index, lesson in indexed:
+        for prerequisite in lesson.prerequisites:
+            if prerequisite not in position:
+                issues.append(
+                    Issue(
+                        "E",
+                        "E-PREREQ-MISSING",
+                        f"пререквизит «{prerequisite}» не найден в плане",
+                        lesson.id,
+                    )
+                )
+            elif position[prerequisite] >= index:
+                issues.append(
+                    Issue(
+                        "E",
+                        "E-PREREQ-ORDER",
+                        f"пререквизит «{prerequisite}» идёт не раньше занятия",
+                        lesson.id,
+                    )
+                )
+    return issues
+
+
+def validate_plan(plan: Plan, root: Path) -> list[Issue]:
+    issues = _hours_issues(plan) + _order_issues(plan)
+    return issues
+
+
 def load_plan(path: Path) -> Plan:
     try:
         raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
