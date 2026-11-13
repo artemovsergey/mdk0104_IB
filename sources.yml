@@ -1,0 +1,74 @@
+schema: 1
+sources:
+  learn-microsoft-com:
+    title: Лекция 1. Основы C# и .NET, типы данных
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/fundamentals/types/
+    kind: official
+  learn-microsoft-com-2:
+    title: Практическая работа 1. Работа с типами данных и преобразованиями
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/programming-guide/types/casting-and-type-conversions
+    kind: official
+  learn-microsoft-com-3:
+    title: Лекция 2. Условные выражения, циклы и структуры данных
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/language-reference/statements/selection-statements
+    kind: official
+  learn-microsoft-com-4:
+    title: Практическая работа 2. Управление потоком выполнения
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/language-reference/statements/
+    kind: official
+  learn-microsoft-com-5:
+    title: Самостоятельная работа 1. Консольный калькулятор
+    url: https://learn.microsoft.com/ru-ru/dotnet/api/system.console
+    kind: official
+  learn-microsoft-com-6:
+    title: Лекция 3. ООП
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/fundamentals/object-oriented/
+    kind: official
+  learn-microsoft-com-7:
+    title: Практическая работа 3. Создание классов и объектов
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/programming-guide/classes-and-structs/classes
+    kind: official
+  learn-microsoft-com-8:
+    title: Практическая работа 4. Реализация наследования и виртуальных методов
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/programming-guide/classes-and-structs/inheritance
+    kind: official
+  learn-microsoft-com-9:
+    title: Практическая работа 5. Создание интерфейсов и абстрактных классов
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/programming-guide/interfaces/
+    kind: official
+  learn-microsoft-com-10:
+    title: Лекция 4. Основы многопоточности и асинхронности
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/asynchronous-programming/
+    kind: official
+  learn-microsoft-com-11:
+    title: Практическая работа 6. Создание и управление потоками
+    url: https://learn.microsoft.com/ru-ru/dotnet/api/system.threading.thread
+    kind: official
+  learn-microsoft-com-12:
+    title: Практическая работа 7. Синхронизация потоков (lock, Monitor, Mutex)
+    url: https://learn.microsoft.com/ru-ru/dotnet/standard/threading/overview-of-synchronization-primitives
+    kind: official
+  learn-microsoft-com-13:
+    title: Практическая работа 8. Использование Task и async/await
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/asynchronous-programming/async-scenarios
+    kind: official
+  learn-microsoft-com-14:
+    title: Лекция 5. Entity Framework Core. ORM для C#
+    url: https://learn.microsoft.com/ru-ru/ef/core/get-started/overview/first-app?tabs=netcore-cli
+    kind: official
+  learn-microsoft-com-15:
+    title: Практическая работа 9. Подходы CodeFirst и DatabaseFirst
+    url: https://learn.microsoft.com/ru-ru/ef/core/managing-schemas/migrations/
+    kind: official
+  learn-microsoft-com-16:
+    title: Практическая работа 10. Конфигурирование базы данных
+    url: https://learn.microsoft.com/ru-ru/ef/core/dbcontext-configuration/
+    kind: official
+  learn-microsoft-com-17:
+    title: Практическая работа 11. Разработка RestAPI
+    url: https://learn.microsoft.com/ru-ru/aspnet/core/web-api/?view=aspnetcore-8.0
+    kind: official
+  learn-mic-rosoft-com:
+    title: Практическая работа 12. Сортировка, фильтрация, поиск, пагинация
+    url: https://learn.microsoft.com/ru-ru/ef/core/querying/
+    kind: article

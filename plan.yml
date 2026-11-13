@@ -1,0 +1,278 @@
+schema: 1
+course:
+  code: МДК 01.04
+  title: Системное программирование
+  specialty: 09.02.07, ИБ
+  group: ИБ-243
+  year: 2026/2027
+  teacher: <ФИО преподавателя>
+  repo_slug: mdk0104-ib
+hours:
+  total: 36
+  theory: 10
+  practice: 24
+  course_design: 0
+  selfstudy: 2
+  consultation: 0
+  exam: 0
+outcomes: []
+sections:
+- number: 1
+  title: Основы .NET и С#
+  goal: ''
+  lessons:
+  - id: 1-l1
+    kind: lecture
+    number: 1
+    title: Основы C# и .NET, типы данных
+    hours: 2
+    prerequisites: []
+    outcomes: []
+    sources:
+    - learn-microsoft-com
+    file: course/Раздел 1. Основы .NET и С#/Лекция 1. Основы C# и .NET, типы данных.md
+    slides: null
+    planned: false
+  - id: 1-p1
+    kind: practice
+    number: 1
+    title: Работа с типами данных и преобразованиями
+    hours: 2
+    prerequisites:
+    - 1-l1
+    outcomes: []
+    sources:
+    - learn-microsoft-com-2
+    file: course/Раздел 1. Основы .NET и С#/Практическая работа 1. Работа с типами
+      данных и преобразованиями.md
+    slides: null
+    planned: false
+  - id: 1-l2
+    kind: lecture
+    number: 2
+    title: Условные выражения, циклы и структуры данных
+    hours: 2
+    prerequisites: []
+    outcomes: []
+    sources:
+    - learn-microsoft-com-3
+    file: course/Раздел 1. Основы .NET и С#/Лекция 2. Условные выражения, циклы и
+      структуры данных.md
+    slides: null
+    planned: false
+  - id: 1-p2
+    kind: practice
+    number: 2
+    title: Управление потоком выполнения
+    hours: 2
+    prerequisites:
+    - 1-l2
+    outcomes: []
+    sources:
+    - learn-microsoft-com-4
+    file: course/Раздел 1. Основы .NET и С#/Практическая работа 2. Управление потоком
+      выполнения.md
+    slides: null
+    planned: false
+  - id: 1-s1
+    kind: selfstudy
+    number: 1
+    title: Консольный калькулятор
+    hours: 2
+    prerequisites:
+    - 1-l2
+    outcomes: []
+    sources:
+    - learn-microsoft-com-5
+    file: course/Раздел 1. Основы .NET и С#/Самостоятельная работа 1. Консольный калькулятор.md
+    slides: null
+    planned: false
+- number: 2
+  title: ООП
+  goal: ''
+  lessons:
+  - id: 2-l3
+    kind: lecture
+    number: 3
+    title: ООП
+    hours: 2
+    prerequisites: []
+    outcomes: []
+    sources:
+    - learn-microsoft-com-6
+    file: course/Раздел 2. ООП/Лекция 3. ООП.md
+    slides: null
+    planned: false
+  - id: 2-p3
+    kind: practice
+    number: 3
+    title: Создание классов и объектов
+    hours: 2
+    prerequisites:
+    - 2-l3
+    outcomes: []
+    sources:
+    - learn-microsoft-com-7
+    file: course/Раздел 2. ООП/Практическая работа 3. Создание классов и объектов.md
+    slides: null
+    planned: false
+  - id: 2-p4
+    kind: practice
+    number: 4
+    title: Реализация наследования и виртуальных методов
+    hours: 2
+    prerequisites:
+    - 2-l3
+    outcomes: []
+    sources:
+    - learn-microsoft-com-8
+    file: course/Раздел 2. ООП/Практическая работа 4. Реализация наследования и виртуальных
+      методов.md
+    slides: null
+    planned: false
+  - id: 2-p5
+    kind: practice
+    number: 5
+    title: Создание интерфейсов и абстрактных классов
+    hours: 2
+    prerequisites:
+    - 2-l3
+    outcomes: []
+    sources:
+    - learn-microsoft-com-9
+    file: course/Раздел 2. ООП/Практическая работа 5. Создание интерфейсов и абстрактных
+      классов.md
+    slides: null
+    planned: false
+- number: 3
+  title: Многопоточность и асинхронность
+  goal: ''
+  lessons:
+  - id: 3-l4
+    kind: lecture
+    number: 4
+    title: Основы многопоточности и асинхронности
+    hours: 2
+    prerequisites: []
+    outcomes: []
+    sources:
+    - learn-microsoft-com-10
+    file: course/Раздел 3. Многопоточность и асинхронность/Лекция 4. Основы многопоточности
+      и асинхронности.md
+    slides: null
+    planned: false
+  - id: 3-p6
+    kind: practice
+    number: 6
+    title: Создание и управление потоками
+    hours: 2
+    prerequisites:
+    - 3-l4
+    outcomes: []
+    sources:
+    - learn-microsoft-com-11
+    file: course/Раздел 3. Многопоточность и асинхронность/Практическая работа 6.
+      Создание и управление потоками.md
+    slides: null
+    planned: false
+  - id: 3-p7
+    kind: practice
+    number: 7
+    title: Синхронизация потоков (lock, Monitor, Mutex)
+    hours: 2
+    prerequisites:
+    - 3-l4
+    outcomes: []
+    sources:
+    - learn-microsoft-com-12
+    file: course/Раздел 3. Многопоточность и асинхронность/Практическая работа 7.
+      Синхронизация потоков (lock, Monitor, Mutex).md
+    slides: null
+    planned: false
+  - id: 3-p8
+    kind: practice
+    number: 8
+    title: Использование Task и async await
+    hours: 2
+    prerequisites:
+    - 3-l4
+    outcomes: []
+    sources:
+    - learn-microsoft-com-13
+    file: course/Раздел 3. Многопоточность и асинхронность/Практическая работа 8.
+      Использование Task и async await.md
+    slides: null
+    planned: false
+- number: 4
+  title: Работа с базами данных. Entity Framework Core
+  goal: ''
+  lessons:
+  - id: 4-l5
+    kind: lecture
+    number: 5
+    title: Entity Framework Core. ORM для C#
+    hours: 2
+    prerequisites: []
+    outcomes: []
+    sources:
+    - learn-microsoft-com-14
+    file: course/Раздел 4. Работа с базами данных. Entity Framework Core/Лекция 5.
+      Entity Framework Core. ORM для C#.md
+    slides: null
+    planned: false
+  - id: 4-p9
+    kind: practice
+    number: 9
+    title: Подходы CodeFirst и DatabaseFirst
+    hours: 2
+    prerequisites:
+    - 4-l5
+    outcomes: []
+    sources:
+    - learn-microsoft-com-15
+    file: course/Раздел 4. Работа с базами данных. Entity Framework Core/Практическая
+      работа 9. Подходы CodeFirst и DatabaseFirst.md
+    slides: null
+    planned: false
+  - id: 4-p10
+    kind: practice
+    number: 10
+    title: Конфигурирование базы данных
+    hours: 2
+    prerequisites:
+    - 4-l5
+    outcomes: []
+    sources:
+    - learn-microsoft-com-16
+    file: course/Раздел 4. Работа с базами данных. Entity Framework Core/Практическая
+      работа 10. Конфигурирование базы данных.md
+    slides: null
+    planned: false
+  - id: 4-p11
+    kind: practice
+    number: 11
+    title: Разработка RestAPI
+    hours: 2
+    prerequisites:
+    - 4-l5
+    outcomes: []
+    sources:
+    - learn-microsoft-com-17
+    file: course/Раздел 4. Работа с базами данных. Entity Framework Core/Практическая
+      работа 11. Разработка RestAPI.md
+    slides: null
+    planned: false
+  - id: 4-p12
+    kind: practice
+    number: 12
+    title: Сортировка, фильтрация, поиск, пагинация
+    hours: 2
+    prerequisites:
+    - 4-l5
+    outcomes: []
+    sources:
+    - learn-mic-rosoft-com
+    file: course/Раздел 4. Работа с базами данных. Entity Framework Core/Практическая
+      работа 12. Сортировка, фильтрация, поиск, пагинация.md
+    slides: null
+    planned: false

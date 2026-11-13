@@ -1,0 +1,11 @@
+schema: 1
+source: "КТП тест.docx"
+parsed: manual
+course: {code: "МДК 01.04", title: "Системное программирование", specialty: "09.02.07", group: "ИБ-243", year: "2026/2027", semester: "3"}
+hours: {total: 8, teacher: 8, theory: 4, practice: 4, course_design: 0, selfstudy: 0, consultation: 0, exam: 0}
+sections:
+  - number: 1
+    title: "Основы"
+    lessons:
+      - {kind: lecture, number: 1, title: "Введение", hours: 4}
+      - {kind: practice, number: 1, title: "Первая программа", hours: 4}

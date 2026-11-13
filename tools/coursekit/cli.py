@@ -10,7 +10,7 @@ from pathlib import Path
 from coursekit.model import Document, parse_document
 from coursekit.normalize import normalize_text, normalize_tree
 
-COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "deck-visual", "qa", "clean", "build")
+COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "deck-visual", "qa", "clean", "build", "plan", "ktp", "docs")
 
 _SECTION_RE = re.compile(r"Раздел\s+(\d+)")
 _KIND_ORDER = {"lecture": 0, "practice": 1, "selfstudy": 2, "exam": 3}
@@ -57,6 +57,40 @@ def build_parser() -> argparse.ArgumentParser:
         description="Сборка учебных материалов курса из markdown",
     )
     sub = parser.add_subparsers(dest="command", required=True)
+
+    from coursekit import VERSION
+    from coursekit.plan import PLAN_SCHEMA
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"coursekit {VERSION} (plan schema {PLAN_SCHEMA})",
+    )
+
+    plan_cmd = sub.add_parser("plan", help="проверить и собрать план курса")
+    plan_cmd.add_argument("--check", action="store_true", help="проверить план")
+    plan_cmd.add_argument("--against", default="", help="сверить с ktp.yml")
+    plan_cmd.add_argument("--json", default="", help="записать отчёт в JSON")
+    plan_cmd.add_argument("--scaffold", action="store_true", help="создать файлы занятий")
+    plan_cmd.add_argument(
+        "--import", dest="import_", action="store_true", help="собрать plan.yml из корпуса"
+    )
+    plan_cmd.add_argument("--from", dest="from_", default=".", help="корень репозитория")
+    plan_cmd.add_argument("--force", action="store_true", help="перезаписать plan.yml")
+    plan_cmd.add_argument("--path", default="plan.yml", help="файл плана")
+
+    ktp_cmd = sub.add_parser("ktp", help="разобрать КТП в ktp.yml")
+    ktp_cmd.add_argument("path", help="файл КТП (.docx или .html)")
+    ktp_cmd.add_argument("--out", default="ktp.yml", help="файл результата")
+    ktp_cmd.add_argument("--source", default="", help="имя исходного документа")
+
+    docs_cmd = sub.add_parser("docs", help="собрать методичку")
+    docs_cmd.add_argument("--config", default="course.yml", help="файл конфигурации курса")
+    docs_cmd.add_argument("--source", default="course", help="каталог исходников")
+    docs_cmd.add_argument("--sources", default="sources.yml", help="файл источников")
+    docs_cmd.add_argument("--titlepage", default="templates/titlepage.md", help="титульный лист")
+    docs_cmd.add_argument("--out", default="dist/docs", help="каталог результатов")
+    docs_cmd.add_argument("--section", type=int, default=None, help="только один раздел")
 
     normalize = sub.add_parser("normalize", help="нормализовать markdown")
     normalize.add_argument("--check", action="store_true", help="только проверить")
@@ -265,6 +299,142 @@ def _run_clean(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_ktp(args: argparse.Namespace) -> int:
+    from coursekit.ktp import KtpError, dump_ktp, parse_ktp
+
+    path = Path(args.path)
+    try:
+        ktp = parse_ktp(path)
+    except KtpError as exc:
+        print(f"ERROR: {exc}")
+        return 1
+    source = args.source or path.name
+    dump_ktp(ktp, Path(args.out), source, str(ktp.get("parsed", "")))
+    print(args.out)
+    return 0
+
+
+def _run_docs(args: argparse.Namespace) -> int:
+    import yaml
+
+    from coursekit.config import load_config
+    from coursekit.render_docs import build_docs_md, load_titlepage, order_by_plan
+    from coursekit.render_docx import build_docx_from_markdown
+    from coursekit.render_figures import prepare_doc
+
+    cfg = load_config(Path(args.config))
+    docs = collect_docs(Path(args.source), layout=cfg.layout)
+    plan_path = Path("plan.yml")
+    if plan_path.exists():
+        from coursekit.plan import load_plan
+
+        try:
+            docs = order_by_plan(docs, load_plan(plan_path))
+        except Exception as error:  # битый план не должен ломать сборку
+            print(f"WARN: план не применён к порядку методички: {error}")
+    if args.section is not None:
+        if cfg.layout == "weeks":
+            docs = [doc for doc in docs if doc.number == args.section]
+        else:
+            docs = [doc for doc in docs if _section_of(doc.path) == args.section]
+    docs = [prepare_doc(doc, Path("dist/figures")) for doc in docs]
+
+    sources: list[dict] = []
+    sources_path = Path(args.sources)
+    if sources_path.exists():
+        data = yaml.safe_load(sources_path.read_text(encoding="utf-8")) or {}
+        if isinstance(data, dict):
+            sources = data.get("sources") or []
+
+    titlepage_path = Path(args.titlepage)
+    titlepage = titlepage_path.read_text(encoding="utf-8") if titlepage_path.exists() else None
+    text = build_docs_md(docs, cfg, sources, titlepage)
+
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    md_path = out_dir / "methodichka.md"
+    md_path.write_text(text, encoding="utf-8")
+    print(md_path)
+
+    if cfg.docx:
+        docx_path = build_docx_from_markdown(text, out_dir / "methodichka.docx", Path("build/docs-work"), toc=False)
+        print(docx_path)
+    if cfg.pdf:
+        from coursekit.render_pdf import build_pdf
+
+        pdf_text = build_docs_md(docs, cfg, sources, None, titlepage=False)
+        pdf_doc = Document(
+            path=md_path,
+            kind="meta",
+            number=0,
+            title="Методические указания",
+            raw=pdf_text,
+        )
+        pdf_path = build_pdf(
+            pdf_doc,
+            cfg,
+            out_dir / "methodichka.pdf",
+            Path("build/docs-pdf"),
+            toc=False,
+            subtitle=cfg.title,
+        )
+        print(pdf_path)
+    return 0
+
+
+def _run_plan(args: argparse.Namespace) -> int:
+    import json
+
+    from coursekit.plan import (
+        PlanError,
+        compare_with_ktp,
+        dump_plan,
+        load_ktp,
+        load_plan,
+        render_report,
+        report_json,
+        scaffold,
+        validate_plan,
+    )
+    from coursekit.plan_import import import_plan
+
+    path = Path(args.path)
+    if args.import_:
+        if path.exists() and not args.force:
+            print(f"ERROR: {path} уже существует, перезапись только с --force")
+            return 1
+        ktp_path = path.parent / "ktp.yml"
+        ktp = load_ktp(ktp_path) if ktp_path.exists() else None
+        plan = import_plan(Path(args.from_), ktp)
+        dump_plan(plan, path)
+        print(render_report(plan, []))
+        return 0
+    if not path.exists():
+        print(f"ERROR: {path} не найден")
+        return 1
+    try:
+        plan = load_plan(path)
+    except PlanError as error:
+        print(f"ERROR: план не читается: {error}")
+        return 1
+    root = path.parent
+    if args.scaffold:
+        for created in scaffold(plan, root):
+            print(created)
+    issues = validate_plan(plan, root)
+    if args.against:
+        issues.extend(compare_with_ktp(plan, load_ktp(Path(args.against))))
+    if args.json:
+        Path(args.json).write_text(
+            json.dumps(report_json(plan, issues), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    print(render_report(plan, issues))
+    if any(issue.level == "E" for issue in issues):
+        return 1
+    return 0
+
+
 def build(
     section: int | None = None,
     only: set[str] | None = None,
@@ -357,6 +527,12 @@ def main(argv: list[str] | None = None) -> int:
         return _run_qa(args)
     if args.command == "clean":
         return _run_clean(args)
+    if args.command == "plan":
+        return _run_plan(args)
+    if args.command == "ktp":
+        return _run_ktp(args)
+    if args.command == "docs":
+        return _run_docs(args)
     if args.command == "build":
         only = {item.strip() for item in args.only.split(",") if item.strip()}
         return build(

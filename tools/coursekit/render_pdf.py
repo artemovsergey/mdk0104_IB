@@ -77,7 +77,14 @@ def _to_root_relative(markdown: str, root: Path) -> str:
     return _IMAGE.sub(repl, markdown)
 
 
-def build_pdf(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Path:
+def build_pdf(
+    doc: Document,
+    cfg: CourseConfig,
+    out: Path,
+    workdir: Path,
+    toc: bool = True,
+    subtitle: str = "",
+) -> Path:
     if not shutil.which("typst"):
         raise RuntimeError("typst не найден в PATH")
     workdir.mkdir(parents=True, exist_ok=True)
@@ -91,20 +98,22 @@ def build_pdf(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Pat
     body = _to_root_relative(body, root)
     md_path.write_text(body + "\n", encoding="utf-8")
 
+    pandoc_cmd = [
+        "pandoc",
+        str(md_path),
+        "-t",
+        "typst",
+        "--standalone",
+        f"--template={_TEMPLATE}",
+        "-o",
+        str(typ_path),
+        "--highlight-style=tango",
+    ]
+    if toc:
+        pandoc_cmd += ["--toc", "--toc-depth=2"]
+
     _run(
-        [
-            "pandoc",
-            str(md_path),
-            "-t",
-            "typst",
-            "--standalone",
-            f"--template={_TEMPLATE}",
-            "-o",
-            str(typ_path),
-            "--toc",
-            "--toc-depth=2",
-            "--highlight-style=tango",
-        ],
+        pandoc_cmd,
         "pandoc не смог собрать Typst (нужен pandoc ≥ 3.1.1)",
     )
 
@@ -132,6 +141,8 @@ def build_pdf(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Pat
             f"teacher={cfg.teacher}",
             "--input",
             f"year={cfg.year}",
+            "--input",
+            f"subtitle={subtitle}",
         ],
         "typst не смог собрать PDF",
     )

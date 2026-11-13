@@ -43,6 +43,7 @@ python -m coursekit pdf --section 1
 python -m coursekit pptx --section 1
 python -m coursekit qa                   # отчёт без сборки
 python -m coursekit qa --strict          # 1 и на предупреждения
+python -m coursekit docs                 # методичка: титул, содержание, приложения, источники
 python -m coursekit build --section 1    # всё по разделу
 python -m coursekit build --book         # весь курс + сборник
 python -m coursekit clean                # удалить build/ и dist/
@@ -84,3 +85,100 @@ python -m coursekit clean                # удалить build/ и dist/
   транслитерируются; исходники можно не переименовывать.
 - `Syntax Error: Suspects object is wrong type (boolean)` от poppler —
   безвредное предупреждение Typst-PDF, `pdfinfo` и `pdftotext` работают.
+
+## Базовая линия 2026-11-13
+
+Замер перед работами по контракту `plan.yml` (ветка `feat/plan-contract`,
+коммит `b659f1c`). Окружение: `~/work/.venv`, зависимости из
+`pip install -e "tools[dev]"`, Python 3.12.
+
+```bash
+PYTHONPATH=tools ~/work/.venv/bin/python -m pytest tools/coursekit/tests -q
+# 46 passed in 126.34s
+
+PYTHONPATH=tools ~/work/.venv/bin/python -m coursekit qa
+# 0 ERROR, 33 WARN
+```
+
+Предупреждения относятся к существующим материалам (нет раздела «Варианты
+заданий», блоки кода без языка, прямые кавычки) и в этой работе не
+исправляются — они фиксируются как известные.
+
+## План курса
+
+`plan.yml` — единственный источник правды о структуре курса: разделы,
+занятия, часы, результаты, источники. Материалы и презентации ссылаются на
+его `id`, поэтому план проверяется до написания текста.
+
+```bash
+python -m coursekit plan                      # сводка: разделы, часы, материал
+python -m coursekit plan --check              # E/W, код 1 при ошибке
+python -m coursekit plan --check --against ktp.yml --json dist/plan-report.json
+python -m coursekit plan --scaffold           # создать файлы занятий с planned: true
+python -m coursekit plan --import --from . --force         # собрать plan.yml из корпуса
+python -m coursekit --version                 # coursekit 1.1 (plan schema 1)
+```
+
+Пример сводки:
+
+```text
+Курс: МДК 01.04 Системное программирование
+Разделов: 4, занятий: 24
+Материал есть: 18, запланировано: 6
+Часы: total 190, теория 78, практика 92, курсовое 20, СРС 20
+Раздел 1. Основы .NET и С# — 48 ч (lecture: 6, practice: 6)
+E E-HOURS-KIND часы «theory» в шапке: 78, а по занятиям вида «lecture»: 76
+```
+
+Уровни: `E` — план невалиден (код 1), `W` — замечание, `D` — расхождение
+с КТП (не влияет на код возврата). Сверка с КТП нужна, чтобы правки РП
+были видны: `D-ADDED`, `D-REMOVED`, `D-MOVED`, `D-HOURS`, `D-COUNT`.
+
+Тесты пакета:
+
+```bash
+~/work/.venv/bin/pip install -e "tools[dev]"
+PYTHONPATH=tools ~/work/.venv/bin/python -m pytest tools/coursekit/tests -q
+```
+
+## План эталонного курса
+
+`ktp.yml` собран из «КТП по МДК.01.04 (ИБ).docx» командой `coursekit ktp`,
+`plan.yml` — командой `coursekit plan --import`, ссылки занятий перенесены
+в `sources.yml`. Текущее состояние:
+
+```text
+PYTHONPATH=tools python3 -m coursekit plan --check --against ktp.yml
+# 0 E, 0 W, 0 D
+```
+
+Отчёт для учебной части — `docs/ktp-diff.md` (перегенерируется той же
+командой с `--json docs/plan-report.json`).
+
+## Сквозной прогон 2026-11-13
+
+Цепочка проверена на эталоне целиком, времена — на этом VPS.
+
+| Шаг | Команда | Время | Результат |
+|-----|---------|-------|-----------|
+| План | `coursekit plan --check --against ktp.yml` | 0,10 с | 0 E, 0 W, 0 D |
+| Заголовки | `coursekit normalize --check` | 0,10 с | без изменений |
+| Корпус | `coursekit qa` | 0,11 с | 0 ошибок, 33 предупреждения |
+| Раздел 1 | `coursekit build --section 1 --only docx,pdf,pptx,figures,qa` | 30,7 с | 10 файлов, 5 предупреждений |
+| Методичка | `coursekit docs` | 13,7 с | `methodichka.md`, `methodichka.docx` (388 КБ) |
+| Колода с визуалами | `coursekit deck-visual "slides/…Лекция 5….md"` | 13,7 с | pptx и pdf |
+| Колода | `coursekit deck "slides/…Лекция 5….md" --out dist/pptx` | 0,5 с | pptx |
+| Скриншот | `node scripts/shot.mjs --command "dotnet --version"` | 2,4 с | PNG 3200×1800 |
+
+Содержание лекции в этом прогоне не перегенерировалось: у всех 18 занятий
+плана есть файлы, а перезапись преподавательского текста — не проверка
+пайплайна. Генерация проверена отдельно на скиллах `lecture`, `practice`,
+`slides` (скиллы и агенты проходят `scripts/check-opencode.py`).
+
+## Проверка корпуса в CI
+
+`qa --strict` на текущем корпусе возвращает код 1: 33 предупреждения
+в существующих материалах (прямые кавычки, блоки кода без языка,
+отсутствующие «Варианты заданий»). Поэтому в `materials.yml` стоит `qa`
+без `--strict`; строгий режим включается отдельным коммитом после чистки
+корпуса.

@@ -34,9 +34,14 @@
 #show raw.where(block: false): set text(size: 10pt)
 #let blockquote(body) = quote(block: true, body)
 
+#let subtitle = sys.inputs.at("subtitle", default: "")
+
 #align(center)[
   #text(size: 16pt, weight: "bold")[#sys.inputs.at("code", default: "")] \
   #text(size: 20pt, weight: "bold", hyphenate: false)[#sys.inputs.at("title", default: "")] \
+  #if subtitle != "" [
+    #text(size: 15pt, style: "italic")[#subtitle] \
+  ]
   #v(1cm)
   #text(size: 14pt)[#sys.inputs.at("specialty", default: "")] \
   #text(size: 14pt)[#sys.inputs.at("group", default: "")] \
