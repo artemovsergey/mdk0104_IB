@@ -10,7 +10,7 @@ from pathlib import Path
 from coursekit.model import Document, parse_document
 from coursekit.normalize import normalize_text, normalize_tree
 
-COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "deck-visual", "qa", "clean", "build", "plan", "ktp")
+COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "deck-visual", "qa", "clean", "build", "plan", "ktp", "docs")
 
 _SECTION_RE = re.compile(r"Раздел\s+(\d+)")
 _KIND_ORDER = {"lecture": 0, "practice": 1, "selfstudy": 2, "exam": 3}
@@ -75,7 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
     plan_cmd.add_argument(
         "--import", dest="import_", action="store_true", help="собрать plan.yml из корпуса"
     )
-    plan_cmd.add_argument("--from", dest="from_", default="course", help="каталог корпуса")
+    plan_cmd.add_argument("--from", dest="from_", default=".", help="корень репозитория")
     plan_cmd.add_argument("--force", action="store_true", help="перезаписать plan.yml")
     plan_cmd.add_argument("--path", default="plan.yml", help="файл плана")
 
@@ -83,6 +83,14 @@ def build_parser() -> argparse.ArgumentParser:
     ktp_cmd.add_argument("path", help="файл КТП (.docx или .html)")
     ktp_cmd.add_argument("--out", default="ktp.yml", help="файл результата")
     ktp_cmd.add_argument("--source", default="", help="имя исходного документа")
+
+    docs_cmd = sub.add_parser("docs", help="собрать методичку")
+    docs_cmd.add_argument("--config", default="course.yml", help="файл конфигурации курса")
+    docs_cmd.add_argument("--source", default="course", help="каталог исходников")
+    docs_cmd.add_argument("--sources", default="sources.yml", help="файл источников")
+    docs_cmd.add_argument("--titlepage", default="templates/titlepage.md", help="титульный лист")
+    docs_cmd.add_argument("--out", default="dist/docs", help="каталог результатов")
+    docs_cmd.add_argument("--section", type=int, default=None, help="только один раздел")
 
     normalize = sub.add_parser("normalize", help="нормализовать markdown")
     normalize.add_argument("--check", action="store_true", help="только проверить")
@@ -306,6 +314,46 @@ def _run_ktp(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_docs(args: argparse.Namespace) -> int:
+    import yaml
+
+    from coursekit.config import load_config
+    from coursekit.render_docs import build_docs_md, load_titlepage
+    from coursekit.render_docx import build_docx_from_markdown
+    from coursekit.render_figures import prepare_doc
+
+    cfg = load_config(Path(args.config))
+    docs = collect_docs(Path(args.source), layout=cfg.layout)
+    if args.section is not None:
+        if cfg.layout == "weeks":
+            docs = [doc for doc in docs if doc.number == args.section]
+        else:
+            docs = [doc for doc in docs if _section_of(doc.path) == args.section]
+    docs = [prepare_doc(doc, Path("dist/figures")) for doc in docs]
+
+    sources: list[dict] = []
+    sources_path = Path(args.sources)
+    if sources_path.exists():
+        data = yaml.safe_load(sources_path.read_text(encoding="utf-8")) or {}
+        if isinstance(data, dict):
+            sources = data.get("sources") or []
+
+    titlepage_path = Path(args.titlepage)
+    titlepage = titlepage_path.read_text(encoding="utf-8") if titlepage_path.exists() else None
+    text = build_docs_md(docs, cfg, sources, titlepage)
+
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    md_path = out_dir / "methodichka.md"
+    md_path.write_text(text, encoding="utf-8")
+    print(md_path)
+
+    if cfg.docx:
+        docx_path = build_docx_from_markdown(text, out_dir / "methodichka.docx", Path("build/docs-work"))
+        print(docx_path)
+    return 0
+
+
 def _run_plan(args: argparse.Namespace) -> int:
     import json
 
@@ -450,6 +498,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_plan(args)
     if args.command == "ktp":
         return _run_ktp(args)
+    if args.command == "docs":
+        return _run_docs(args)
     if args.command == "build":
         only = {item.strip() for item in args.only.split(",") if item.strip()}
         return build(

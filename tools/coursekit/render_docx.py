@@ -65,6 +65,17 @@ def build_docx(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Pa
     md_path = workdir / f"{slugify(doc.title)}.md"
     md_path.write_text(prepared, encoding="utf-8")
 
+    return build_docx_from_markdown(prepared, out, workdir)
+
+
+def build_docx_from_markdown(markdown: str, out: Path, workdir: Path) -> Path:
+    """Собирает DOCX из готового markdown: титул уже внутри текста."""
+    workdir.mkdir(parents=True, exist_ok=True)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    prepared = markdown.replace("<!-- pagebreak -->", _PAGEBREAK)
+    md_path = workdir / f"{slugify(out.stem)}.md"
+    md_path.write_text(prepared, encoding="utf-8")
+
     reference = build_reference_docx(workdir / "reference.docx")
     result = subprocess.run(
         [

@@ -43,6 +43,7 @@ python -m coursekit pdf --section 1
 python -m coursekit pptx --section 1
 python -m coursekit qa                   # отчёт без сборки
 python -m coursekit qa --strict          # 1 и на предупреждения
+python -m coursekit docs                 # методичка: титул, содержание, приложения, источники
 python -m coursekit build --section 1    # всё по разделу
 python -m coursekit build --book         # весь курс + сборник
 python -m coursekit clean                # удалить build/ и dist/
