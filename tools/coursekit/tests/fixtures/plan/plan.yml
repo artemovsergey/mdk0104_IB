@@ -1,0 +1,30 @@
+schema: 1
+course: {code: "МДК 01.04", title: "Системное программирование", specialty: "09.02.07", group: "ИБ-243", year: "2026/2027", teacher: "Тестовый Преподаватель"}
+hours: {total: 8, theory: 4, practice: 4, course_design: 0, selfstudy: 0, consultation: 0, exam: 0}
+outcomes:
+  - {id: "ПК 1.1", text: "Разрабатывать консольные приложения"}
+sections:
+  - number: 1
+    title: "Основы"
+    goal: "Ввести в платформу .NET"
+    lessons:
+      - id: "1-1"
+        kind: lecture
+        number: 1
+        title: "Введение"
+        hours: 4
+        prerequisites: []
+        outcomes: ["ПК 1.1"]
+        sources: ["dotnet-docs"]
+        file: "course/Раздел 1. Основы/Лекция 1. Введение.md"
+        planned: false
+      - id: "1-2"
+        kind: practice
+        number: 1
+        title: "Первая программа"
+        hours: 4
+        prerequisites: ["1-1"]
+        outcomes: ["ПК 1.1"]
+        sources: ["dotnet-docs"]
+        file: "course/Раздел 1. Основы/Практическая работа 1. Первая программа.md"
+        planned: false
