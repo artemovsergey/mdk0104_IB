@@ -84,3 +84,21 @@ python -m coursekit clean                # удалить build/ и dist/
   транслитерируются; исходники можно не переименовывать.
 - `Syntax Error: Suspects object is wrong type (boolean)` от poppler —
   безвредное предупреждение Typst-PDF, `pdfinfo` и `pdftotext` работают.
+
+## Базовая линия 2026-11-13
+
+Замер перед работами по контракту `plan.yml` (ветка `feat/plan-contract`,
+коммит `b659f1c`). Окружение: `~/work/.venv`, зависимости из
+`pip install -e "tools[dev]"`, Python 3.12.
+
+```bash
+PYTHONPATH=tools ~/work/.venv/bin/python -m pytest tools/coursekit/tests -q
+# 46 passed in 126.34s
+
+PYTHONPATH=tools ~/work/.venv/bin/python -m coursekit qa
+# 0 ERROR, 33 WARN
+```
+
+Предупреждения относятся к существующим материалам (нет раздела «Варианты
+заданий», блоки кода без языка, прямые кавычки) и в этой работе не
+исправляются — они фиксируются как известные.
