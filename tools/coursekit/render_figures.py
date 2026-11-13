@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import re
+import shutil
 import subprocess
 from dataclasses import replace
 from pathlib import Path
@@ -34,6 +36,10 @@ def substitute_figures(text: str, figures: dict[int, Path]) -> str:
 
 
 def _render(command: list[str], error_prefix: str) -> None:
+    if os.name == "nt" and command and command[0].lower() == "npx":
+        resolved = shutil.which("npx")
+        if resolved:
+            command = ["cmd.exe", "/c", resolved, *command[1:]]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
         tail = "\n".join(result.stderr.strip().splitlines()[-15:])

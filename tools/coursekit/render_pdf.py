@@ -103,7 +103,7 @@ def build_pdf(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Pat
             str(typ_path),
             "--toc",
             "--toc-depth=2",
-            "--highlight-style=tango",
+            "--highlight-style=none",
         ],
         "pandoc не смог собрать Typst (нужен pandoc ≥ 3.1.1)",
     )
