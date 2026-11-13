@@ -420,3 +420,54 @@ def load_plan(path: Path) -> Plan:
         outcomes=tuple(raw.get("outcomes") or ()),
         sections=tuple(_section(item) for item in raw.get("sections") or ()),
     )
+
+
+def dump_plan(plan: Plan, path: Path) -> None:
+    payload = {
+        "schema": plan.schema,
+        "course": dict(plan.course),
+        "hours": dict(plan.hours),
+        "outcomes": [dict(item) for item in plan.outcomes],
+        "sections": [
+            {
+                "number": section.number,
+                "title": section.title,
+                "goal": section.goal,
+                "lessons": [
+                    {
+                        "id": lesson.id,
+                        "kind": lesson.kind,
+                        "number": lesson.number,
+                        "title": lesson.title,
+                        "hours": lesson.hours,
+                        "prerequisites": list(lesson.prerequisites),
+                        "outcomes": list(lesson.outcomes),
+                        "sources": list(lesson.sources),
+                        "file": lesson.file,
+                        "slides": lesson.slides,
+                        "planned": lesson.planned,
+                    }
+                    for lesson in section.lessons
+                ],
+            }
+            for section in plan.sections
+        ],
+    }
+    Path(path).write_text(
+        yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+
+
+def scaffold(plan: Plan, root: Path) -> list[Path]:
+    created: list[Path] = []
+    for lesson in plan.lessons:
+        if not lesson.planned or not lesson.file:
+            continue
+        target = Path(root) / lesson.file
+        if target.exists():
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(f"# {lesson.title}\n", encoding="utf-8")
+        created.append(target)
+    return created
