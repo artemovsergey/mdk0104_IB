@@ -202,8 +202,84 @@ def _order_issues(plan: Plan) -> list[Issue]:
     return issues
 
 
+def _file_issues(plan: Plan, root: Path) -> list[Issue]:
+    issues: list[Issue] = []
+    listed: set[str] = set()
+    for lesson in plan.lessons:
+        if lesson.file:
+            listed.add(lesson.file)
+            if not (root / lesson.file).exists():
+                issues.append(
+                    Issue(
+                        "E",
+                        "E-FILE-MISSING",
+                        f"файл «{lesson.file}» не найден",
+                        lesson.id,
+                    )
+                )
+            elif lesson.planned:
+                issues.append(
+                    Issue(
+                        "W",
+                        "W-PLANNED-EXISTS",
+                        f"файл «{lesson.file}» уже есть, а занятие помечено planned",
+                        lesson.id,
+                    )
+                )
+        if not lesson.sources:
+            issues.append(
+                Issue("W", "W-SOURCES", "у занятия не указаны источники", lesson.id)
+            )
+    known_outcomes = {str(item.get("id")) for item in plan.outcomes}
+    for lesson in plan.lessons:
+        for outcome in lesson.outcomes:
+            if outcome not in known_outcomes:
+                issues.append(
+                    Issue(
+                        "W",
+                        "W-OUTCOME-UNKNOWN",
+                        f"результат «{outcome}» отсутствует в outcomes плана",
+                        lesson.id,
+                    )
+                )
+    for section in plan.sections:
+        if not any(lesson.kind == "practice" for lesson in section.lessons):
+            issues.append(
+                Issue(
+                    "W",
+                    "W-SECTION-NO-PRACTICE",
+                    f"в разделе {section.number} нет практических занятий",
+                )
+            )
+        covered = {
+            prerequisite
+            for lesson in section.lessons
+            if lesson.kind == "practice"
+            for prerequisite in lesson.prerequisites
+        }
+        for lesson in section.lessons:
+            if lesson.kind == "lecture" and lesson.id not in covered:
+                issues.append(
+                    Issue(
+                        "W",
+                        "W-LECTURE-NO-PRACTICE",
+                        "лекцию не закрепляет ни одна практика",
+                        lesson.id,
+                    )
+                )
+    course_root = root / "course"
+    if course_root.is_dir():
+        for path in sorted(course_root.rglob("*.md")):
+            relative = path.relative_to(root).as_posix()
+            if relative not in listed:
+                issues.append(
+                    Issue("W", "W-ORPHAN", f"файл «{relative}» не указан в плане")
+                )
+    return issues
+
+
 def validate_plan(plan: Plan, root: Path) -> list[Issue]:
-    issues = _hours_issues(plan) + _order_issues(plan)
+    issues = _hours_issues(plan) + _order_issues(plan) + _file_issues(plan, root)
     return issues
 
 
