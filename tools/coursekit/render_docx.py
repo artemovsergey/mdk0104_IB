@@ -68,7 +68,7 @@ def build_docx(doc: Document, cfg: CourseConfig, out: Path, workdir: Path) -> Pa
     return build_docx_from_markdown(prepared, out, workdir)
 
 
-def build_docx_from_markdown(markdown: str, out: Path, workdir: Path) -> Path:
+def build_docx_from_markdown(markdown: str, out: Path, workdir: Path, toc: bool = True) -> Path:
     """Собирает DOCX из готового markdown: титул уже внутри текста."""
     workdir.mkdir(parents=True, exist_ok=True)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -77,17 +77,18 @@ def build_docx_from_markdown(markdown: str, out: Path, workdir: Path) -> Path:
     md_path.write_text(prepared, encoding="utf-8")
 
     reference = build_reference_docx(workdir / "reference.docx")
+    command = [
+        "pandoc",
+        str(md_path),
+        "-o",
+        str(out),
+        f"--reference-doc={reference}",
+        "--highlight-style=tango",
+    ]
+    if toc:
+        command += ["--toc", "--toc-depth=2"]
     result = subprocess.run(
-        [
-            "pandoc",
-            str(md_path),
-            "-o",
-            str(out),
-            f"--reference-doc={reference}",
-            "--toc",
-            "--toc-depth=2",
-            "--highlight-style=tango",
-        ],
+        command,
         capture_output=True,
         text=True,
     )

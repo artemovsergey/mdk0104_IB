@@ -128,12 +128,22 @@ def _hours_issues(plan: Plan) -> list[Issue]:
                     ),
                 )
             )
-    total = (
-        int(plan.hours.get("theory", 0))
-        + int(plan.hours.get("practice", 0))
-        + int(plan.hours.get("course_design", 0))
-        + int(plan.hours.get("selfstudy", 0))
-    )
+    for key, kind in (("consultation", "consultation"), ("exam", "exam")):
+        if key not in plan.hours:
+            continue
+        expected = int(plan.hours.get(key, 0))
+        if actual[kind] != expected:
+            issues.append(
+                Issue(
+                    level="E",
+                    code="E-HOURS-KIND",
+                    message=(
+                        f"часы «{key}» в шапке: {expected}, "
+                        f"а по занятиям вида «{kind}»: {actual[kind]}"
+                    ),
+                )
+            )
+    total = sum(actual.values())
     declared = int(plan.hours.get("total", 0))
     if declared != total:
         issues.append(
@@ -208,7 +218,8 @@ def _file_issues(plan: Plan, root: Path) -> list[Issue]:
     for lesson in plan.lessons:
         if lesson.file:
             listed.add(lesson.file)
-            if not (root / lesson.file).exists():
+            exists = (root / lesson.file).exists()
+            if not exists and not lesson.planned:
                 issues.append(
                     Issue(
                         "E",
@@ -217,12 +228,32 @@ def _file_issues(plan: Plan, root: Path) -> list[Issue]:
                         lesson.id,
                     )
                 )
-            elif lesson.planned:
+            elif exists and lesson.planned:
                 issues.append(
                     Issue(
                         "W",
                         "W-PLANNED-EXISTS",
                         f"файл «{lesson.file}» уже есть, а занятие помечено planned",
+                        lesson.id,
+                    )
+                )
+        elif not lesson.planned:
+            issues.append(
+                Issue(
+                    "E",
+                    "E-FILE-MISSING",
+                    "у занятия нет файла материала",
+                    lesson.id,
+                )
+            )
+        if lesson.slides:
+            listed.add(lesson.slides)
+            if not (root / lesson.slides).exists():
+                issues.append(
+                    Issue(
+                        "E",
+                        "E-FILE-MISSING",
+                        f"файл презентации «{lesson.slides}» не найден",
                         lesson.id,
                     )
                 )
@@ -409,7 +440,8 @@ def load_plan(path: Path) -> Plan:
     schema = raw.get("schema")
     if schema != PLAN_SCHEMA:
         raise PlanError(
-            f"{path}: schema {schema!r} не поддерживается, ожидается {PLAN_SCHEMA}"
+            f"{path}: schema {schema!r}: неподдерживаемая схема плана, "
+            f"ожидается {PLAN_SCHEMA}"
         )
     return Plan(
         schema=PLAN_SCHEMA,
@@ -459,6 +491,19 @@ def dump_plan(plan: Plan, path: Path) -> None:
     )
 
 
+def _skeleton(lesson: Lesson) -> str:
+    from coursekit.model import PROFILES
+
+    profile = PROFILES.get(lesson.kind)
+    lines = [f"# {lesson.title}", ""]
+    titles = profile.required if profile else ()
+    if not titles:
+        lines.extend(["TODO", ""])
+    for title in titles:
+        lines.extend([f"## {title}", "", "TODO", ""])
+    return "\n".join(lines)
+
+
 def scaffold(plan: Plan, root: Path) -> list[Path]:
     created: list[Path] = []
     for lesson in plan.lessons:
@@ -468,7 +513,7 @@ def scaffold(plan: Plan, root: Path) -> list[Path]:
         if target.exists():
             continue
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(f"# {lesson.title}\n", encoding="utf-8")
+        target.write_text(_skeleton(lesson), encoding="utf-8")
         created.append(target)
     return created
 

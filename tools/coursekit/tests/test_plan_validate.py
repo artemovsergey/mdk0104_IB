@@ -108,3 +108,61 @@ def test_unlisted_course_file_warns():
         assert "W-ORPHAN" in _codes(validate_plan(plan, FIXTURE.parent))
     finally:
         orphan.unlink()
+
+
+def test_lesson_without_file_is_error():
+    plan = load_plan(FIXTURE)
+    section = plan.sections[0]
+    lessons = (replace(section.lessons[0], file=None), *section.lessons[1:])
+    broken = replace(plan, sections=(replace(section, lessons=lessons),))
+    assert "E-FILE-MISSING" in _codes(validate_plan(broken, FIXTURE.parent))
+
+
+def test_planned_lesson_may_have_missing_file():
+    plan = load_plan(FIXTURE)
+    section = plan.sections[0]
+    planned = replace(
+        section.lessons[0],
+        file="course/Раздел 1. Основы/Лекция 9. Новая.md",
+        planned=True,
+    )
+    lessons = (planned, *section.lessons[1:])
+    fixed = replace(plan, sections=(replace(section, lessons=lessons),))
+    codes = _codes(validate_plan(fixed, FIXTURE.parent))
+    assert "E-FILE-MISSING" not in codes
+
+
+def test_missing_slides_is_error():
+    plan = load_plan(FIXTURE)
+    section = plan.sections[0]
+    lessons = (replace(section.lessons[0], slides="slides/нет.md"), *section.lessons[1:])
+    broken = replace(plan, sections=(replace(section, lessons=lessons),))
+    assert "E-FILE-MISSING" in _codes(validate_plan(broken, FIXTURE.parent))
+
+
+def test_exam_hours_count_toward_total():
+    plan = load_plan(FIXTURE)
+    section = plan.sections[0]
+    exam = replace(section.lessons[-1], id="9-e1", kind="exam", number=1, hours=6, file=None)
+    lessons = (*section.lessons, exam)
+    broken = replace(
+        plan,
+        hours={**plan.hours, "total": plan.hours["total"] + 6},
+        sections=(replace(section, lessons=lessons),),
+    )
+    assert "E-HOURS-TOTAL" not in _codes(validate_plan(broken, FIXTURE.parent))
+
+
+def test_consultation_hours_match_own_field():
+    plan = load_plan(FIXTURE)
+    section = plan.sections[0]
+    consultation = replace(
+        section.lessons[-1], id="9-c1", kind="consultation", number=1, hours=4, file=None
+    )
+    lessons = (*section.lessons, consultation)
+    broken = replace(
+        plan,
+        hours={**plan.hours, "total": plan.hours["total"] + 4, "consultation": 2},
+        sections=(replace(section, lessons=lessons),),
+    )
+    assert "E-HOURS-KIND" in _codes(validate_plan(broken, FIXTURE.parent))

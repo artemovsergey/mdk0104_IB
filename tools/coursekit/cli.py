@@ -318,12 +318,20 @@ def _run_docs(args: argparse.Namespace) -> int:
     import yaml
 
     from coursekit.config import load_config
-    from coursekit.render_docs import build_docs_md, load_titlepage
+    from coursekit.render_docs import build_docs_md, load_titlepage, order_by_plan
     from coursekit.render_docx import build_docx_from_markdown
     from coursekit.render_figures import prepare_doc
 
     cfg = load_config(Path(args.config))
     docs = collect_docs(Path(args.source), layout=cfg.layout)
+    plan_path = Path("plan.yml")
+    if plan_path.exists():
+        from coursekit.plan import load_plan
+
+        try:
+            docs = order_by_plan(docs, load_plan(plan_path))
+        except Exception as error:  # битый план не должен ломать сборку
+            print(f"WARN: план не применён к порядку методички: {error}")
     if args.section is not None:
         if cfg.layout == "weeks":
             docs = [doc for doc in docs if doc.number == args.section]
@@ -349,8 +357,28 @@ def _run_docs(args: argparse.Namespace) -> int:
     print(md_path)
 
     if cfg.docx:
-        docx_path = build_docx_from_markdown(text, out_dir / "methodichka.docx", Path("build/docs-work"))
+        docx_path = build_docx_from_markdown(text, out_dir / "methodichka.docx", Path("build/docs-work"), toc=False)
         print(docx_path)
+    if cfg.pdf:
+        from coursekit.render_pdf import build_pdf
+
+        pdf_text = build_docs_md(docs, cfg, sources, None, titlepage=False)
+        pdf_doc = Document(
+            path=md_path,
+            kind="meta",
+            number=0,
+            title="Методические указания",
+            raw=pdf_text,
+        )
+        pdf_path = build_pdf(
+            pdf_doc,
+            cfg,
+            out_dir / "methodichka.pdf",
+            Path("build/docs-pdf"),
+            toc=False,
+            subtitle=cfg.title,
+        )
+        print(pdf_path)
     return 0
 
 
@@ -358,6 +386,7 @@ def _run_plan(args: argparse.Namespace) -> int:
     import json
 
     from coursekit.plan import (
+        PlanError,
         compare_with_ktp,
         dump_plan,
         load_ktp,
@@ -383,21 +412,25 @@ def _run_plan(args: argparse.Namespace) -> int:
     if not path.exists():
         print(f"ERROR: {path} не найден")
         return 1
-    plan = load_plan(path)
+    try:
+        plan = load_plan(path)
+    except PlanError as error:
+        print(f"ERROR: план не читается: {error}")
+        return 1
     root = path.parent
-    issues = validate_plan(plan, root)
-    if args.against:
-        issues.extend(compare_with_ktp(plan, load_ktp(Path(args.against))))
     if args.scaffold:
         for created in scaffold(plan, root):
             print(created)
+    issues = validate_plan(plan, root)
+    if args.against:
+        issues.extend(compare_with_ktp(plan, load_ktp(Path(args.against))))
     if args.json:
         Path(args.json).write_text(
             json.dumps(report_json(plan, issues), ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
     print(render_report(plan, issues))
-    if args.check and any(issue.level == "E" for issue in issues):
+    if any(issue.level == "E" for issue in issues):
         return 1
     return 0
 

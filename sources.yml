@@ -38,7 +38,7 @@ sources:
     kind: official
   learn-microsoft-com-10:
     title: Лекция 4. Основы многопоточности и асинхронности
-    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/asynchronous-programming/https://learn.microsoft.com/dotnet/api/system.threading.thread
+    url: https://learn.microsoft.com/ru-ru/dotnet/csharp/asynchronous-programming/
     kind: official
   learn-microsoft-com-11:
     title: Практическая работа 6. Создание и управление потоками
@@ -70,5 +70,5 @@ sources:
     kind: official
   learn-mic-rosoft-com:
     title: Практическая работа 12. Сортировка, фильтрация, поиск, пагинация
-    url: https://learn.mic rosoft.com/ru-ru/ef/core/querying/
+    url: https://learn.microsoft.com/ru-ru/ef/core/querying/
     kind: article

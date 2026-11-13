@@ -48,3 +48,31 @@ def test_dump_plan_roundtrip(tmp_path):
     out = tmp_path / "plan.yml"
     dump_plan(plan, out)
     assert load_plan(out).sections[0].lessons[0].title == "Введение"
+
+
+def test_import_assigns_path_to_planned_lesson(tmp_path):
+    root = _tree(tmp_path)
+    ktp = {"sections": [{"number": 1, "title": "Основы", "lessons": [
+        {"kind": "lecture", "number": 1, "title": "Введение", "hours": 2},
+        {"kind": "practice", "number": 2, "title": "Строки", "hours": 2},
+    ]}]}
+    plan = import_plan(root, ktp)
+    planned = [l for l in plan.lessons if l.planned]
+    assert len(planned) == 1
+    assert planned[0].file == "course/Раздел 1. Основы/Практическая работа 2. Строки.md"
+
+
+def test_scaffold_writes_required_sections(tmp_path):
+    root = _tree(tmp_path)
+    plan = import_plan(root)
+    from dataclasses import replace
+    lesson = replace(
+        plan.sections[0].lessons[0],
+        planned=True,
+        file="course/Раздел 1. Основы/Лекция 2. Новая.md",
+    )
+    broken = replace(plan, sections=(replace(plan.sections[0], lessons=(lesson,)),))
+    created = scaffold(broken, root)
+    text = created[0].read_text(encoding="utf-8")
+    assert "## План лекции" in text
+    assert "TODO" in text

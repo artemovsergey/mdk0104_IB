@@ -37,3 +37,24 @@ def test_version_prints_schema(capsys):
     with pytest.raises(SystemExit):
         main(["--version"])
     assert "plan schema 1" in capsys.readouterr().out
+
+
+def test_plan_returns_error_code_without_check_flag(tmp_path, capsys):
+    from coursekit.cli import main
+
+    plan = tmp_path / "plan.yml"
+    plan.write_text(
+        "schema: 1\ncourse: {}\nhours: {total: 99}\noutcomes: []\nsections: []\n",
+        encoding="utf-8",
+    )
+    assert main(["plan", "--path", str(plan)]) == 1
+    assert "E-HOURS-TOTAL" in capsys.readouterr().out
+
+
+def test_plan_reports_unknown_schema(tmp_path, capsys):
+    from coursekit.cli import main
+
+    plan = tmp_path / "plan.yml"
+    plan.write_text("schema: 99\ncourse: {}\nsections: []\n", encoding="utf-8")
+    assert main(["plan", "--path", str(plan)]) == 1
+    assert "схем" in capsys.readouterr().out

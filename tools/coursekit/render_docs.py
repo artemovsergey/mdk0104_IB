@@ -44,7 +44,9 @@ def _toc(docs: list[Document]) -> str:
         section = _section_dir(doc)
         if section and section != current:
             current = section
-            lines.append(f"**{section}**")
+            if lines and lines[-1] != "":
+                lines.append("")
+            lines.append(f"### {section.replace(chr(35), chr(92) + chr(35))}")
             lines.append("")
         kind = _KIND_TITLE.get(doc.kind)
         if kind:
@@ -107,14 +109,28 @@ def _fill(text: str, cfg: CourseConfig | None) -> str:
     return text
 
 
+def order_by_plan(docs: list[Document], plan) -> list[Document]:
+    """Ставит материалы в порядке занятий из plan.yml; прочие — в конце."""
+    order: dict[str, int] = {}
+    for index, lesson in enumerate(plan.lessons):
+        if lesson.file:
+            order[Path(lesson.file).as_posix()] = index
+    indexed = list(enumerate(docs))
+    indexed.sort(key=lambda pair: (order.get(pair[1].path.as_posix(), len(order) + pair[0]), pair[0]))
+    return [doc for _, doc in indexed]
+
+
 def build_docs_md(
     docs: list[Document],
     cfg: CourseConfig | None = None,
     sources: list[dict] | dict | None = None,
     titlepage_text: str | None = None,
+    titlepage: bool = True,
 ) -> str:
     parts: list[str] = []
-    if titlepage_text:
+    if not titlepage:
+        pass
+    elif titlepage_text:
         parts.append(_fill(titlepage_text, cfg).rstrip())
     else:
         parts.append(

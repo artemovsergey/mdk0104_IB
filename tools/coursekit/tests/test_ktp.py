@@ -29,3 +29,16 @@ def test_ktp_cli_reports_parse_error(tmp_path, capsys):
     broken.write_text("<table><tr><td>№</td><td>Тема</td></tr></table>", encoding="utf-8")
     assert main(["ktp", str(broken), "--out", str(tmp_path / "ktp.yml")]) == 1
     assert "занят" in capsys.readouterr().out
+
+
+def test_parse_ktp_rejects_merged_cells():
+    text = """
+    <table>
+      <tr><th>№</th><th>Тема</th><th>Часы</th><th>Тип</th></tr>
+      <tr><td>1</td><td>Раздел 1. Основы</td><td></td><td></td></tr>
+      <tr><td>1</td><td>Лекция 1. Введение</td><td>2</td><td>Лекция</td></tr>
+      <tr><td></td><td>Практическая работа 1. Строки</td><td>2</td><td>Практическая работа</td></tr>
+    </table>
+    """
+    with pytest.raises(KtpError, match="объедин"):
+        parse_ktp_html(text)

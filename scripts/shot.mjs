@@ -81,6 +81,11 @@ async function ensureBrowser() {
 
 async function shootCommand(getBrowser, command, out, size, scale) {
   const [width, height] = size.split("x").map(Number);
+  const inCommand = findSecret(command);
+  if (inCommand) {
+    console.error(`ERROR: в команде найден секрет (${inCommand}); снимок не сделан`);
+    return 2;
+  }
   const result = spawnSync("sh", ["-c", command], { encoding: "utf-8", timeout: 60_000 });
   const output = `${result.stdout || ""}${result.stderr || ""}`.trimEnd();
   const secret = findSecret(output);

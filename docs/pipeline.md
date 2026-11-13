@@ -115,7 +115,7 @@ python -m coursekit plan                      # сводка: разделы, ч
 python -m coursekit plan --check              # E/W, код 1 при ошибке
 python -m coursekit plan --check --against ktp.yml --json dist/plan-report.json
 python -m coursekit plan --scaffold           # создать файлы занятий с planned: true
-python -m coursekit plan --import --from course --force   # собрать plan.yml из корпуса
+python -m coursekit plan --import --from . --force         # собрать plan.yml из корпуса
 python -m coursekit --version                 # coursekit 1.1 (plan schema 1)
 ```
 

@@ -19,6 +19,19 @@ _KIND_BY_PREFIX = {
     "Самостоятельная работа": ("selfstudy", "s"),
 }
 
+_PREFIX_BY_KIND = {kind: prefix for prefix, (kind, _letter) in _KIND_BY_PREFIX.items()}
+_LEADING_PREFIX_RE = re.compile(
+    r"^(?:Лекция|Практическая работа|Самостоятельная работа)\s+\d+\.\s*"
+)
+
+
+def _planned_file(section_number: int, section_title: str, kind: str, number: int, title: str) -> str | None:
+    prefix = _PREFIX_BY_KIND.get(kind)
+    if prefix is None:
+        return None
+    short = _LEADING_PREFIX_RE.sub("", title).strip() or str(number)
+    return f"course/Раздел {section_number}. {section_title}/{prefix} {number}. {short}.md"
+
 
 def _parse_section(directory: Path) -> tuple[int, str] | None:
     match = _SECTION_RE.match(directory.name)
@@ -91,14 +104,17 @@ def import_plan(root: Path, ktp: dict[str, Any] | None = None) -> Plan:
             key = (str(item.get("kind")), int(item.get("number", 0)))
             if key in existing:
                 continue
+            title = str(item.get("title", ""))
             bucket["lessons"].append(
                 {
                     "id": f"{section_number}-{letter_by_kind.get(key[0], 'x')}{key[1]}",
                     "kind": key[0],
                     "number": key[1],
-                    "title": str(item.get("title", "")),
+                    "title": title,
                     "hours": int(item.get("hours", 0)),
-                    "file": None,
+                    "file": _planned_file(
+                        section_number, bucket["title"], key[0], key[1], title
+                    ),
                     "planned": True,
                 }
             )

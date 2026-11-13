@@ -71,6 +71,17 @@ def parse_ktp_html(text: str) -> dict[str, Any]:
             sections.append(current)
             continue
         if not cells[0].isdigit():
+            title_cell = cells[1].strip() if len(cells) > 1 else ""
+            hours_cell = cells[2] if len(cells) > 2 else ""
+            if (
+                not cells[0]
+                and re.search(r"(?:работа|Лекция)\s+\d+", title_cell, re.I)
+                and _NUMBER_RE.search(hours_cell)
+            ):
+                raise KtpError(
+                    "похоже на объединённые ячейки в таблице КТП: строка без номера "
+                    f"«{title_cell[:60]}»; поправьте таблицу и разберите снова"
+                )
             continue
         if current is None:
             current = {"number": 1, "title": "", "lessons": []}
