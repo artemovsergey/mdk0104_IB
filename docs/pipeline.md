@@ -102,3 +102,40 @@ PYTHONPATH=tools ~/work/.venv/bin/python -m coursekit qa
 Предупреждения относятся к существующим материалам (нет раздела «Варианты
 заданий», блоки кода без языка, прямые кавычки) и в этой работе не
 исправляются — они фиксируются как известные.
+
+## План курса
+
+`plan.yml` — единственный источник правды о структуре курса: разделы,
+занятия, часы, результаты, источники. Материалы и презентации ссылаются на
+его `id`, поэтому план проверяется до написания текста.
+
+```bash
+python -m coursekit plan                      # сводка: разделы, часы, материал
+python -m coursekit plan --check              # E/W, код 1 при ошибке
+python -m coursekit plan --check --against ktp.yml --json dist/plan-report.json
+python -m coursekit plan --scaffold           # создать файлы занятий с planned: true
+python -m coursekit plan --import --from course --force   # собрать plan.yml из корпуса
+python -m coursekit --version                 # coursekit 1.1 (plan schema 1)
+```
+
+Пример сводки:
+
+```text
+Курс: МДК 01.04 Системное программирование
+Разделов: 4, занятий: 24
+Материал есть: 18, запланировано: 6
+Часы: total 190, теория 78, практика 92, курсовое 20, СРС 20
+Раздел 1. Основы .NET и С# — 48 ч (lecture: 6, practice: 6)
+E E-HOURS-KIND часы «theory» в шапке: 78, а по занятиям вида «lecture»: 76
+```
+
+Уровни: `E` — план невалиден (код 1), `W` — замечание, `D` — расхождение
+с КТП (не влияет на код возврата). Сверка с КТП нужна, чтобы правки РП
+были видны: `D-ADDED`, `D-REMOVED`, `D-MOVED`, `D-HOURS`, `D-COUNT`.
+
+Тесты пакета:
+
+```bash
+~/work/.venv/bin/pip install -e "tools[dev]"
+PYTHONPATH=tools ~/work/.venv/bin/python -m pytest tools/coursekit/tests -q
+```

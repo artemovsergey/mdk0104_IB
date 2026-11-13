@@ -10,7 +10,7 @@ from pathlib import Path
 from coursekit.model import Document, parse_document
 from coursekit.normalize import normalize_text, normalize_tree
 
-COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "deck-visual", "qa", "clean", "build")
+COMMANDS = ("normalize", "figures", "docx", "pdf", "pptx", "deck", "deck-visual", "qa", "clean", "build", "plan")
 
 _SECTION_RE = re.compile(r"Раздел\s+(\d+)")
 _KIND_ORDER = {"lecture": 0, "practice": 1, "selfstudy": 2, "exam": 3}
@@ -57,6 +57,27 @@ def build_parser() -> argparse.ArgumentParser:
         description="Сборка учебных материалов курса из markdown",
     )
     sub = parser.add_subparsers(dest="command", required=True)
+
+    from coursekit import VERSION
+    from coursekit.plan import PLAN_SCHEMA
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"coursekit {VERSION} (plan schema {PLAN_SCHEMA})",
+    )
+
+    plan_cmd = sub.add_parser("plan", help="проверить и собрать план курса")
+    plan_cmd.add_argument("--check", action="store_true", help="проверить план")
+    plan_cmd.add_argument("--against", default="", help="сверить с ktp.yml")
+    plan_cmd.add_argument("--json", default="", help="записать отчёт в JSON")
+    plan_cmd.add_argument("--scaffold", action="store_true", help="создать файлы занятий")
+    plan_cmd.add_argument(
+        "--import", dest="import_", action="store_true", help="собрать plan.yml из корпуса"
+    )
+    plan_cmd.add_argument("--from", dest="from_", default="course", help="каталог корпуса")
+    plan_cmd.add_argument("--force", action="store_true", help="перезаписать plan.yml")
+    plan_cmd.add_argument("--path", default="plan.yml", help="файл плана")
 
     normalize = sub.add_parser("normalize", help="нормализовать markdown")
     normalize.add_argument("--check", action="store_true", help="только проверить")
@@ -265,6 +286,54 @@ def _run_clean(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_plan(args: argparse.Namespace) -> int:
+    import json
+
+    from coursekit.plan import (
+        compare_with_ktp,
+        dump_plan,
+        load_ktp,
+        load_plan,
+        render_report,
+        report_json,
+        scaffold,
+        validate_plan,
+    )
+    from coursekit.plan_import import import_plan
+
+    path = Path(args.path)
+    if args.import_:
+        if path.exists() and not args.force:
+            print(f"ERROR: {path} уже существует, перезапись только с --force")
+            return 1
+        ktp_path = path.parent / "ktp.yml"
+        ktp = load_ktp(ktp_path) if ktp_path.exists() else None
+        plan = import_plan(Path(args.from_), ktp)
+        dump_plan(plan, path)
+        print(render_report(plan, []))
+        return 0
+    if not path.exists():
+        print(f"ERROR: {path} не найден")
+        return 1
+    plan = load_plan(path)
+    root = path.parent
+    issues = validate_plan(plan, root)
+    if args.against:
+        issues.extend(compare_with_ktp(plan, load_ktp(Path(args.against))))
+    if args.scaffold:
+        for created in scaffold(plan, root):
+            print(created)
+    if args.json:
+        Path(args.json).write_text(
+            json.dumps(report_json(plan, issues), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    print(render_report(plan, issues))
+    if args.check and any(issue.level == "E" for issue in issues):
+        return 1
+    return 0
+
+
 def build(
     section: int | None = None,
     only: set[str] | None = None,
@@ -357,6 +426,8 @@ def main(argv: list[str] | None = None) -> int:
         return _run_qa(args)
     if args.command == "clean":
         return _run_clean(args)
+    if args.command == "plan":
+        return _run_plan(args)
     if args.command == "build":
         only = {item.strip() for item in args.only.split(",") if item.strip()}
         return build(

@@ -471,3 +471,55 @@ def scaffold(plan: Plan, root: Path) -> list[Path]:
         target.write_text(f"# {lesson.title}\n", encoding="utf-8")
         created.append(target)
     return created
+
+
+def report_json(plan: Plan, issues: list[Issue]) -> dict[str, Any]:
+    by_kind: dict[str, int] = {}
+    for lesson in plan.lessons:
+        by_kind[lesson.kind] = by_kind.get(lesson.kind, 0) + 1
+    return {
+        "schema": plan.schema,
+        "summary": {
+            "sections": len(plan.sections),
+            "lessons": len(plan.lessons),
+            "by_kind": by_kind,
+            "with_file": sum(1 for lesson in plan.lessons if lesson.file),
+            "planned": sum(1 for lesson in plan.lessons if lesson.planned),
+            "hours": dict(plan.hours),
+        },
+        "issues": [
+            {
+                "level": issue.level,
+                "code": issue.code,
+                "message": issue.message,
+                "lesson_id": issue.lesson_id,
+            }
+            for issue in issues
+        ],
+    }
+
+
+def render_report(plan: Plan, issues: list[Issue]) -> str:
+    lines = [
+        f"Курс: {plan.course.get('code', '—')} {plan.course.get('title', '')}".rstrip(),
+        f"Разделов: {len(plan.sections)}, занятий: {len(plan.lessons)}",
+        f"Материал есть: {sum(1 for lesson in plan.lessons if lesson.file)}, "
+        f"запланировано: {sum(1 for lesson in plan.lessons if lesson.planned)}",
+        f"Часы: total {plan.hours.get('total', 0)}, теория {plan.hours.get('theory', 0)}, "
+        f"практика {plan.hours.get('practice', 0)}, "
+        f"курсовое {plan.hours.get('course_design', 0)}, "
+        f"СРС {plan.hours.get('selfstudy', 0)}",
+    ]
+    for section in plan.sections:
+        kinds: dict[str, int] = {}
+        for lesson in section.lessons:
+            kinds[lesson.kind] = kinds.get(lesson.kind, 0) + 1
+        detail = ", ".join(f"{kind}: {count}" for kind, count in kinds.items())
+        hours = sum(lesson.hours for lesson in section.lessons)
+        lines.append(f"Раздел {section.number}. {section.title} — {hours} ч ({detail})")
+    if issues:
+        lines.append("")
+        for issue in issues:
+            where = f" [{issue.lesson_id}]" if issue.lesson_id else ""
+            lines.append(f"{issue.level} {issue.code}{where} {issue.message}")
+    return "\n".join(lines)
